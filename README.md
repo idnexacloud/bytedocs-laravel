@@ -318,12 +318,6 @@ Document your routes with PHPDoc comments:
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
 
-## Credits
-
-- **ByteDocs Team** - Initial work and development
-- **Laravel Community** - For the amazing framework
-- **All Contributors** - Thank you for your contributions!
-
 ## Support
 
 - 📖 [Documentation](https://github.com/idnexacloud/bytedocs-laravel)
