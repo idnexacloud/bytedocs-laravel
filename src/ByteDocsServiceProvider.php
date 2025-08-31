@@ -178,6 +178,11 @@ class ByteDocsServiceProvider extends ServiceProvider
         $action = $route->getAction();
         $routeFile = $this->getRouteFile($action, $route);
         
+        // Skip routes with unknown source when mode is specific
+        if ($routeFile === null) {
+            return false;
+        }
+        
         return match ($mode) {
             'web' => $routeFile === 'web',
             'api' => $routeFile === 'api',
@@ -188,7 +193,7 @@ class ByteDocsServiceProvider extends ServiceProvider
     /**
      * Determine which route file the route belongs to
      */
-    protected function getRouteFile(array $action, $route = null): string
+    protected function getRouteFile(array $action, $route = null): ?string
     {
         // Check if route has a file definition
         if (isset($action['file'])) {
@@ -215,7 +220,7 @@ class ByteDocsServiceProvider extends ServiceProvider
             return 'api';
         }
 
-        // Default to web
-        return 'web';
+        // Return null if route source cannot be determined
+        return null;
     }
 }
