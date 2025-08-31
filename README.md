@@ -1,7 +1,7 @@
 # ByteDocs Laravel Package
 
-[![Latest Stable Version](https://poser.pugx.org/bytedocs/laravel-bytedocs/v/stable)](https://packagist.org/packages/bytedocs/laravel-bytedocs)
-[![License](https://poser.pugx.org/bytedocs/laravel-bytedocs/license)](https://packagist.org/packages/bytedocs/laravel-bytedocs)
+[![Latest Stable Version](https://poser.pugx.org/idnexacloud/bytedocs-laravel/v/stable)](https://packagist.org/packages/idnexacloud/bytedocs-laravel)
+[![License](https://poser.pugx.org/idnexacloud/bytedocs-laravel/license)](https://packagist.org/packages/idnexacloud/bytedocs-laravel)
 
 **ByteDocs Laravel** is a modern alternative to Swagger with better design, auto-detection, and AI integration for Laravel applications. It automatically generates beautiful API documentation from your Laravel routes with zero configuration required.
 
@@ -21,7 +21,7 @@
 Install the package via Composer:
 
 ```bash
-composer require bytedocs/laravel-bytedocs
+composer require idnexacloud/laravel-bytedocs
 ```
 
 The package will automatically register its service provider.
@@ -326,10 +326,6 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 ## Support
 
-- 📖 [Documentation](https://github.com/bytedocs/laravel-bytedocs)
-- 🐛 [Report Issues](https://github.com/bytedocs/laravel-bytedocs/issues)  
-- 💬 [Discussions](https://github.com/bytedocs/laravel-bytedocs/discussions)
-
----
-
-Made with ❤️ by the ByteDocs Team
+- 📖 [Documentation](https://github.com/idnexacloud/bytedocs-laravel)
+- 🐛 [Report Issues](https://github.com/idnexacloud/bytedocs-laravel/issues)  
+- 💬 [Discussions](https://github.com/idnexacloud/bytedocs-laravel/discussions)
