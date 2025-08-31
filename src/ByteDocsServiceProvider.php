@@ -8,6 +8,7 @@ use ByteDocs\Laravel\Core\APIDocs;
 use ByteDocs\Laravel\Core\Config;
 use ByteDocs\Laravel\Commands\GenerateDocsCommand;
 use ByteDocs\Laravel\Commands\ManageBansCommand;
+use ByteDocs\Laravel\Commands\InstallCommand;
 use ByteDocs\Laravel\Middleware\DocsAuthMiddleware;
 
 class ByteDocsServiceProvider extends ServiceProvider
@@ -63,6 +64,7 @@ class ByteDocsServiceProvider extends ServiceProvider
             $this->commands([
                 GenerateDocsCommand::class,
                 ManageBansCommand::class,
+                InstallCommand::class,
             ]);
         }
 
