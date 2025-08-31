@@ -100,6 +100,20 @@ return [
     'auto_detect' => env('BYTEDOCS_AUTO_DETECT', true),
 
     /**
+     * Route detection configuration
+     * Specify which route files to detect: 'web', 'api', or 'both'
+     */
+    'route_detection' => [
+        /**
+         * Detection mode: 'web', 'api', 'both'
+         * - 'web': Only detect routes from web.php
+         * - 'api': Only detect routes from api.php  
+         * - 'both': Detect from both web.php and api.php
+         */
+        'mode' => env('BYTEDOCS_ROUTE_MODE', 'api'),
+    ],
+
+    /**
      * Paths to exclude from documentation
      */
     'exclude_paths' => [

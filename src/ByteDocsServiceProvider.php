@@ -128,6 +128,11 @@ class ByteDocsServiceProvider extends ServiceProvider
             return true;
         }
 
+        // Check route detection mode configuration
+        if (!$this->shouldIncludeRouteByMode($route)) {
+            return true;
+        }
+
         // Skip ByteDocs routes
         $docsPath = trim(config('bytedocs.docs_path', '/docs'), '/');
         if (str_starts_with($uri, $docsPath)) {
@@ -156,5 +161,61 @@ class ByteDocsServiceProvider extends ServiceProvider
         }
 
         return false;
+    }
+
+    /**
+     * Check if route should be included based on detection mode
+     */
+    protected function shouldIncludeRouteByMode($route): bool
+    {
+        $mode = config('bytedocs.route_detection.mode', 'both');
+        
+        if ($mode === 'both') {
+            return true;
+        }
+
+        // Get route definition file by checking route action
+        $action = $route->getAction();
+        $routeFile = $this->getRouteFile($action, $route);
+        
+        return match ($mode) {
+            'web' => $routeFile === 'web',
+            'api' => $routeFile === 'api',
+            default => true,
+        };
+    }
+
+    /**
+     * Determine which route file the route belongs to
+     */
+    protected function getRouteFile(array $action, $route = null): string
+    {
+        // Check if route has a file definition
+        if (isset($action['file'])) {
+            $file = $action['file'];
+            if (str_contains($file, 'routes/web.php')) {
+                return 'web';
+            }
+            if (str_contains($file, 'routes/api.php')) {
+                return 'api';
+            }
+        }
+
+        // Fallback: check URI pattern
+        // API routes typically start with 'api/'
+        if ($route) {
+            $uri = $route->uri();
+            if (str_starts_with($uri, 'api/')) {
+                return 'api';
+            }
+        }
+
+        // Check middleware for api routes
+        if ($route && in_array('api', $route->middleware())) {
+            return 'api';
+        }
+
+        // Default to web
+        return 'web';
     }
 }
