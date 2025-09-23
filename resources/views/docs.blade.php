@@ -52,6 +52,11 @@
             }
         };
         let currentTheme = localStorage.getItem('theme-color') || 'green';
+        // Validate theme exists, fallback to green if invalid
+        if (!themes[currentTheme]) {
+            currentTheme = 'green';
+            localStorage.setItem('theme-color', currentTheme);
+        }
         const currentColors = themes[currentTheme];
         tailwind.config = {
             theme: {
@@ -846,18 +851,6 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
                                 </button>
-                                <button
-                                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors duration-200"
-                                    id="settingsBtn">
-                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                                        </path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    </svg>
-                                </button>
                             </div>
                         </div>
                         
@@ -1000,62 +993,108 @@
                 </div>
                 </div> 
                 
-                <div id="scenarioContent" class="hidden p-6">
-                    <div class="w-full mx-auto">
+                <div id="scenarioContent" class="hidden">
+                    <!-- Mobile Header for Scenario Mode -->
+                    <div class="block md:hidden bg-white dark:bg-[#0a0a0a] border-b border-gray-200 dark:border-[#2c2d2d] p-4">
+                        <div class="flex items-center justify-between">
+                            <button
+                                class="mobile-menu-btn p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors duration-200"
+                                id="mobileMenuBtnScenario">
+                                <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                            <div class="flex-1 text-center">
+                                <h1 class="text-lg font-bold text-gray-900 dark:text-white">API Scenarios</h1>
+                                <p class="text-xs text-gray-600 dark:text-gray-400">Test API Workflows</p>
+                            </div>
+                            <div class="flex gap-1">
+                                <button
+                                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors duration-200"
+                                    onclick="resetToCleanCreateState(); openScenarioModal();" title="New Scenario">
+                                    <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                </button>
+                                <button
+                                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors duration-200"
+                                    onclick="exportAllScenarios()" title="Export All Scenarios">
+                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                    </svg>
+                                </button>
+                                <button
+                                    class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors duration-200"
+                                    onclick="openImportModal()" title="Import Scenarios">
+                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full mx-auto p-4 sm:p-6">
                         
                         <div class="mb-6">
-                            <div class="flex items-center justify-between mb-4">
+                            <!-- Desktop Header (hidden on mobile) -->
+                            <div class="hidden md:flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 gap-4">
                                 <div>
-                                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">API Scenarios</h1>
-                                    <p class="text-gray-600 dark:text-gray-300 mt-1">Create and manage collections of API requests for comprehensive testing</p>
+                                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">API Scenarios</h1>
+                                    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">Create and manage collections of API requests for comprehensive testing</p>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                                     
-                                    <button class="bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-300 font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2" onclick="exportAllScenarios()" title="Export all scenarios">
+                                    <button class="bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-300 font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-sm" onclick="exportAllScenarios()" title="Export all scenarios">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                         </svg>
-                                        Export All
+                                        <span class="hidden sm:inline">Export All</span>
+                                        <span class="sm:hidden">Export</span>
                                     </button>
                                     
-                                    <button class="bg-gray-100 hover:bg-gray-200 dark:bg-[#2c2d2d] dark:hover:bg-[#3c3d3d] text-gray-700 dark:text-gray-300 font-medium px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2" onclick="openImportModal()">
+                                    <button class="bg-gray-100 hover:bg-gray-200 dark:bg-[#2c2d2d] dark:hover:bg-[#3c3d3d] text-gray-700 dark:text-gray-300 font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-sm" onclick="openImportModal()">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                                         </svg>
-                                        Import JSON
+                                        <span class="hidden sm:inline">Import JSON</span>
+                                        <span class="sm:hidden">Import</span>
                                     </button>
                                     
-                                    <button class="bg-accent hover:bg-accent-hover text-white font-semibold px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2" id="createScenarioBtn">
+                                    <button class="bg-accent hover:bg-accent-hover text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-1 sm:gap-2 text-sm" id="createScenarioBtn">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                         </svg>
-                                        New Scenario
+                                        <span class="hidden sm:inline">New Scenario</span>
+                                        <span class="sm:hidden">New</span>
                                     </button>
                                 </div>
                             </div>
                             
-                            <div class="max-w-md">
+                            <div class="w-full sm:max-w-md">
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                         </svg>
                                     </div>
-                                    <input type="text" id="scenarioSearchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-[#2c2d2d] rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent text-sm" placeholder="Search scenarios by name or description..." onkeyup="searchScenarios(this.value)">
+                                    <input type="text" id="scenarioSearchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-[#2c2d2d] rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent text-sm" placeholder="Search scenarios..." onkeyup="searchScenarios(this.value)">
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="scenariosGrid">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" id="scenariosGrid">
                             
-                            <div class="bg-white dark:bg-[#171717] border-2 border-dashed border-gray-300 dark:border-[#2c2d2d] rounded-lg p-6 hover:border-accent transition-all duration-200 cursor-pointer flex flex-col items-center justify-center min-h-[200px]" id="addScenarioCard">
+                            <div class="bg-white dark:bg-[#171717] border-2 border-dashed border-gray-300 dark:border-[#2c2d2d] rounded-lg p-4 sm:p-6 hover:border-accent transition-all duration-200 cursor-pointer flex flex-col items-center justify-center min-h-[180px] sm:min-h-[200px]" id="addScenarioCard">
                                 <div class="w-12 h-12 bg-gray-100 dark:bg-[#2c2d2d] rounded-lg flex items-center justify-center mb-3">
                                     <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>
                                 </div>
-                                <h3 class="font-medium text-gray-600 dark:text-gray-300 mb-1">Create New Scenario</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 text-center">Build a sequence of API requests for comprehensive testing</p>
+                                <h3 class="font-medium text-gray-600 dark:text-gray-300 mb-1 text-sm sm:text-base">Create New Scenario</h3>
+                                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 text-center">Build a sequence of API requests for comprehensive testing</p>
                             </div>
                         </div>
                     </div>
@@ -1070,21 +1109,125 @@
         </div>
         
         <div id="scenarioModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-            <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
+            <div class="bg-white dark:bg-[#171717] rounded-none lg:rounded-lg shadow-xl w-full h-full lg:max-w-6xl lg:w-full lg:mx-4 lg:max-h-[90vh] lg:h-auto overflow-hidden flex flex-col">
                 
-                <div class="p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex items-center justify-between">
+                <div class="flex-shrink-0 p-4 sm:p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white" id="scenarioModalTitle">Create New Scenario</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Build a sequence of API requests for testing workflows</p>
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white" id="scenarioModalTitle">Create New Scenario</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">Build a sequence of API requests for testing workflows</p>
                     </div>
                     <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200" id="closeScenarioModal">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
                 
-                <div class="flex h-[calc(90vh-160px)]">
+                <!-- Mobile Tab Navigation (visible only on mobile) -->
+                <div class="lg:hidden flex-shrink-0 border-b border-gray-200 dark:border-[#2c2d2d]">
+                    <div class="flex">
+                        <button id="mobileInfoTab" class="flex-1 px-3 py-3 text-sm font-medium text-center border-b-2 border-accent text-accent bg-accent/5" onclick="switchMobileScenarioTab('information')">
+                            <div class="flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Information</span>
+                                <span class="sm:hidden">Info</span>
+                            </div>
+                        </button>
+                        <button id="mobileEndpointsTab" class="flex-1 px-3 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 dark:text-gray-400" onclick="switchMobileScenarioTab('endpoints')">
+                            <div class="flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                Endpoints
+                            </div>
+                        </button>
+                        <button id="mobileSequenceTab" class="flex-1 px-2 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 dark:text-gray-400" onclick="switchMobileScenarioTab('sequence')">
+                            <div class="flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span>Sequence</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile Content Panels -->
+                <div class="lg:hidden flex-1 overflow-hidden flex flex-col">
+                    <!-- Mobile Information Panel -->
+                    <div id="mobileInformationContent" class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Scenario Name</label>
+                            <input type="text" id="mobileScenarioName" class="w-full px-3 py-2 border border-gray-300 dark:border-[#2c2d2d] rounded-md bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Enter scenario name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                            <textarea id="mobileScenarioDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-[#2c2d2d] rounded-md bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent resize-none" placeholder="Describe what this scenario tests"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Execution Mode</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="mobileExecutionMode" value="waterfall" class="mr-2 text-accent focus:ring-accent" checked>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Sequential</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="mobileExecutionMode" value="parallel" class="mr-2 text-accent focus:ring-accent">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Parallel</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Authentication</label>
+                            <div class="bg-gray-50 dark:bg-[#2c2d2d] border border-gray-200 dark:border-[#171717] rounded-lg p-3">
+                                <select id="mobileScenarioAuthType" class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-[#171717] rounded bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-accent mb-2">
+                                    <option value="none">No Authentication</option>
+                                    <option value="bearer">Bearer Token</option>
+                                    <option value="basic">Basic Auth</option>
+                                    <option value="apikey">API Key</option>
+                                </select>
+                                <div id="mobileScenarioAuthInputs" class="space-y-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Endpoints Panel -->
+                    <div id="mobileEndpointsContent" class="flex-1 overflow-hidden p-4 hidden flex flex-col">
+                        <div class="flex flex-col h-full">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Available Endpoints</label>
+                            <div class="mb-3">
+                                <input type="text" id="mobileEndpointSearch" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-[#2c2d2d] rounded bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-accent" placeholder="Search endpoints...">
+                            </div>
+                            <div class="border border-gray-300 dark:border-[#2c2d2d] rounded-md bg-white dark:bg-black flex-1 overflow-y-auto">
+                                <div id="mobileAvailableEndpoints" class="p-3 space-y-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Sequence Panel -->
+                    <div id="mobileSequenceContent" class="flex-1 overflow-hidden p-4 hidden flex flex-col">
+                        <div class="mb-4">
+                            <h3 class="font-medium text-gray-900 dark:text-white mb-2">Request Sequence</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                Switch to Endpoints tab to add requests to this scenario
+                            </p>
+                        </div>
+                        <div id="mobileScenarioRequests" class="flex-1 border-2 border-dashed border-gray-300 dark:border-[#2c2d2d] rounded-lg p-3 overflow-y-auto space-y-2">
+                            <div class="text-center text-gray-500 dark:text-gray-400 py-8" id="mobileEmptyScenarioMessage">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                <p>Click on endpoints from the Endpoints tab to build your scenario</p>
+                                <p class="text-xs mt-1">Requests will be executed in the order you add them</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Layout (hidden on mobile) -->
+                <div class="hidden lg:flex lg:flex-1 lg:overflow-hidden">
                     
                     <div class="w-1/3 border-r border-gray-200 dark:border-[#2c2d2d] flex flex-col">
                         
@@ -1149,15 +1292,15 @@
                                 </div>
                             </div>
                             
-                            <div id="endpointsTabContent" class="p-6 hidden">
-                                <div class="space-y-4">
+                            <div id="endpointsTabContent" class="p-3 sm:p-6 hidden">
+                                <div class="space-y-3 sm:space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Available Endpoints</label>
+                                        <label class="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Available Endpoints</label>
                                         <div class="mb-3">
-                                            <input type="text" id="endpointSearch" class="w-full px-3 py-2 border border-gray-300 dark:border-[#2c2d2d] rounded bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-accent" placeholder="Search endpoints...">
+                                            <input type="text" id="endpointSearch" class="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 dark:border-[#2c2d2d] rounded bg-white dark:bg-black text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-accent" placeholder="Search endpoints...">
                                         </div>
-                                        <div class="border border-gray-300 dark:border-[#2c2d2d] rounded-md bg-white dark:bg-black max-h-[calc(100vh-400px)] overflow-y-auto">
-                                            <div id="availableEndpoints" class="p-3 space-y-2">
+                                        <div class="border border-gray-300 dark:border-[#2c2d2d] rounded-md bg-white dark:bg-black max-h-[calc(100vh-300px)] sm:max-h-[calc(100vh-400px)] overflow-y-auto">
+                                            <div id="availableEndpoints" class="p-2 sm:p-3 space-y-2">
                                                 
                                             </div>
                                         </div>
@@ -1167,7 +1310,7 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 flex flex-col">
+                    <div class="w-2/3 flex flex-col border-l border-gray-200 dark:border-[#2c2d2d]">
                         <div class="p-6 border-b border-gray-200 dark:border-[#2c2d2d]">
                             <div class="flex items-center justify-between">
                                 <h3 class="font-medium text-gray-900 dark:text-white">Request Sequence</h3>
@@ -1193,32 +1336,44 @@
                     </div>
                 </div>
                 
-                <div class="p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex items-center justify-between">
-                    <button class="px-4 py-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 border border-red-300 dark:border-red-600 rounded-md transition-colors duration-200" id="leftScenarioButton">Reset Form</button>
-                    <div class="flex gap-3">
-                        <button class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200" id="cancelScenario">Cancel</button>
-                        <button class="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-md font-medium transition-colors duration-200" id="saveScenario">Save Scenario</button>
+                <div class="flex-shrink-0 p-3 sm:p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex flex-col gap-3">
+                    <!-- Mobile: Stack buttons vertically -->
+                    <div class="sm:hidden flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <button class="flex-1 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 scenario-cancel-btn">Cancel</button>
+                            <button class="flex-1 bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 scenario-save-btn">Save Scenario</button>
+                        </div>
+                        <button class="w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 border border-red-300 dark:border-red-600 rounded-md transition-colors duration-200 scenario-left-btn">Reset Form</button>
+                    </div>
+                    
+                    <!-- Desktop: Original layout -->
+                    <div class="hidden sm:flex sm:items-center sm:justify-between">
+                        <button class="px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 border border-red-300 dark:border-red-600 rounded-md transition-colors duration-200 scenario-left-btn" id="leftScenarioButton">Reset Form</button>
+                        <div class="flex gap-3">
+                            <button class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 scenario-cancel-btn" id="cancelScenario">Cancel</button>
+                            <button class="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-md text-sm font-medium transition-colors duration-200 scenario-save-btn" id="saveScenario">Save Scenario</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div id="endpointConfigModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-            <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        <div id="endpointConfigModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-2 sm:p-4">
+            <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-6xl w-full max-h-full sm:max-h-[90vh] overflow-hidden flex flex-col">
                 
-                <div class="p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex items-center justify-between">
+                <div class="p-4 sm:p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
-                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white" id="configModalTitle">Configure Request</h2>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="configModalSubtitle">Customize request parameters, headers, and body</p>
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white" id="configModalTitle">Configure Request</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1" id="configModalSubtitle">Customize request parameters, headers, and body</p>
                     </div>
                     <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200" id="closeConfigModal">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
                 </div>
                 
-                <div class="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+                <div class="flex-1 p-3 sm:p-6 overflow-y-auto min-h-0">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         
                         <div class="space-y-6">
@@ -1284,9 +1439,9 @@
                     </div>
                 </div>
                 
-                <div class="p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex items-center justify-end gap-3">
-                    <button class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200" id="cancelConfig">Cancel</button>
-                    <button class="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-md font-medium transition-colors duration-200" id="saveConfig">Save Configuration</button>
+                <div class="flex-shrink-0 p-3 sm:p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                    <button class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 sm:w-auto w-full" id="cancelConfig">Cancel</button>
+                    <button class="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-md font-medium transition-colors duration-200 sm:w-auto w-full" id="saveConfig">Save Configuration</button>
                 </div>
             </div>
         </div>
@@ -1406,10 +1561,10 @@
         </div>
     </div>
     
-    <div id="scenarioDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+    <div id="scenarioDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-2 sm:p-4">
+        <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-6xl w-full max-h-full sm:max-h-[90vh] overflow-hidden flex flex-col">
             
-            <div class="p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex items-center justify-between">
+            <div class="p-4 sm:p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <div id="detailsIcon" class="w-10 h-10 bg-gradient-to-br rounded-lg flex items-center justify-center">
                         
@@ -1436,7 +1591,7 @@
                 </div>
             </div>
             
-            <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <div class="flex-1 p-3 sm:p-6 overflow-y-auto min-h-0">
                 
                 <div class="mb-6">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Description</h3>
@@ -1471,15 +1626,15 @@
                 </div>
             </div>
             
-            <div class="p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex justify-between">
-                <button class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2c2d2d] rounded-lg transition-colors duration-200" onclick="closeScenarioDetails()">
+            <div class="flex-shrink-0 p-3 sm:p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex flex-col sm:flex-row justify-between gap-3">
+                <button class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2c2d2d] rounded-lg transition-colors duration-200 sm:w-auto w-full" onclick="closeScenarioDetails()">
                     Close
                 </button>
-                <div class="flex gap-3">
-                    <button class="bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-lg transition-colors duration-200 text-sm font-medium" onclick="exportScenarioFromDetails()">
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <button class="bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-300 px-4 py-2 rounded-lg transition-colors duration-200 text-sm font-medium sm:w-auto w-full" onclick="exportScenarioFromDetails()">
                         Export JSON
                     </button>
-                    <button class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm font-medium" onclick="runScenarioFromDetails()">
+                    <button class="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg transition-colors duration-200 text-sm font-medium sm:w-auto w-full" onclick="runScenarioFromDetails()">
                         Run Scenario
                     </button>
                 </div>
@@ -1769,7 +1924,6 @@
 
         const settingsModal = document.getElementById('settingsModal');
         const authModal = document.getElementById('authModal');
-        const settingsBtn = document.getElementById('settingsBtn');
         const settingsBtnSidebar = document.getElementById('settingsBtnSidebar');
         const authBtn = document.getElementById('authBtn');
         const authBtnDesktop = document.getElementById('authBtnDesktop');
@@ -2696,7 +2850,6 @@
                 settingsModal.classList.remove('hidden');
                 settingsModal.classList.add('flex');
             }
-            settingsBtn.addEventListener('click', openSettings);
             if (settingsBtnSidebar) {
                 settingsBtnSidebar.addEventListener('click', openSettings);
             }
@@ -2758,6 +2911,7 @@
             saveAuth.addEventListener('click', saveAuthentication);
 
             mobileMenuBtn.addEventListener('click', toggleMobileSidebar);
+            document.getElementById('mobileMenuBtnScenario').addEventListener('click', toggleMobileSidebar);
             sidebarOverlay.addEventListener('click', closeMobileSidebar);
 
             document.addEventListener('click', (e) => {
@@ -2769,6 +2923,11 @@
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 768) {
                     closeMobileSidebar();
+                }
+                
+                // Re-render scenario requests to adjust mobile/desktop layout
+                if (currentScenario && currentScenario.requests) {
+                    renderScenarioRequests(currentScenario.requests);
                 }
             });
 
@@ -2832,7 +2991,13 @@
         }
 
         function initThemeColor() {
-            const savedTheme = localStorage.getItem('theme-color') || 'green';
+            let savedTheme = localStorage.getItem('theme-color') || 'green';
+            
+            // Validate theme exists, fallback to green if invalid
+            if (!themes[savedTheme]) {
+                savedTheme = 'green';
+                localStorage.setItem('theme-color', savedTheme);
+            }
 
             const currentColors = themes[savedTheme];
             document.documentElement.style.setProperty('--accent-color', currentColors.accent);
@@ -3235,6 +3400,9 @@
                 btn.classList.remove('active');
             });
             document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            
+            // Close mobile sidebar when switching modes
+            closeMobileSidebar();
 
             const docsContent = document.getElementById('docsContent');
             const scenarioContent = document.getElementById('scenarioContent');
@@ -3294,6 +3462,86 @@
                 endpointsTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400', 'hover:text-gray-700', 'dark:hover:text-gray-300', 'hover:border-gray-300');
                 endpointsTab.classList.add('border-accent', 'text-accent', 'bg-accent/5');
                 endpointsContent.classList.remove('hidden');
+            }
+        }
+
+        function switchMobileScenarioTab(tab) {
+            const mobileInfoTab = document.getElementById('mobileInfoTab');
+            const mobileEndpointsTab = document.getElementById('mobileEndpointsTab');
+            const mobileSequenceTab = document.getElementById('mobileSequenceTab');
+            const mobileInformationContent = document.getElementById('mobileInformationContent');
+            const mobileEndpointsContent = document.getElementById('mobileEndpointsContent');
+            const mobileSequenceContent = document.getElementById('mobileSequenceContent');
+
+            // Reset all tabs
+            [mobileInfoTab, mobileEndpointsTab, mobileSequenceTab].forEach(tabEl => {
+                tabEl.classList.remove('border-accent', 'text-accent', 'bg-accent/5');
+                tabEl.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            });
+
+            // Hide all content
+            [mobileInformationContent, mobileEndpointsContent, mobileSequenceContent].forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Show selected tab and content
+            if (tab === 'information') {
+                mobileInfoTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                mobileInfoTab.classList.add('border-accent', 'text-accent', 'bg-accent/5');
+                mobileInformationContent.classList.remove('hidden');
+            } else if (tab === 'endpoints') {
+                mobileEndpointsTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                mobileEndpointsTab.classList.add('border-accent', 'text-accent', 'bg-accent/5');
+                mobileEndpointsContent.classList.remove('hidden');
+                // Sync endpoints content for mobile
+                syncEndpointsToMobile();
+            } else if (tab === 'sequence') {
+                mobileSequenceTab.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+                mobileSequenceTab.classList.add('border-accent', 'text-accent', 'bg-accent/5');
+                mobileSequenceContent.classList.remove('hidden');
+                // Sync sequence content for mobile
+                syncSequenceToMobile();
+            }
+        }
+
+        function syncEndpointsToMobile() {
+            // No need to manually sync anymore, populateAvailableEndpoints handles both
+            populateAvailableEndpoints(document.getElementById('endpointSearch')?.value || '');
+        }
+
+        function syncSequenceToMobile() {
+            // No need to manually sync anymore, renderScenarioRequests handles both
+            if (currentScenario && currentScenario.requests) {
+                renderScenarioRequests(currentScenario.requests);
+            }
+        }
+
+        function syncMobileToDesktop() {
+            // Sync form data from mobile to desktop
+            const mobileScenarioName = document.getElementById('mobileScenarioName');
+            const desktopScenarioName = document.getElementById('scenarioName');
+            if (mobileScenarioName && desktopScenarioName) {
+                desktopScenarioName.value = mobileScenarioName.value;
+            }
+
+            const mobileScenarioDescription = document.getElementById('mobileScenarioDescription');
+            const desktopScenarioDescription = document.getElementById('scenarioDescription');
+            if (mobileScenarioDescription && desktopScenarioDescription) {
+                desktopScenarioDescription.value = mobileScenarioDescription.value;
+            }
+
+            // Sync execution mode
+            const mobileExecutionMode = document.querySelector('input[name="mobileExecutionMode"]:checked');
+            const desktopExecutionMode = document.querySelector('input[name="executionMode"][value="' + (mobileExecutionMode?.value || 'waterfall') + '"]');
+            if (desktopExecutionMode) {
+                desktopExecutionMode.checked = true;
+            }
+
+            // Sync auth type
+            const mobileAuthType = document.getElementById('mobileScenarioAuthType');
+            const desktopAuthType = document.getElementById('scenarioAuthType');
+            if (mobileAuthType && desktopAuthType) {
+                desktopAuthType.value = mobileAuthType.value;
             }
         }
 
@@ -3381,7 +3629,7 @@
 
         function createScenarioCard(scenario, index) {
             const card = document.createElement('div');
-            card.className = 'scenario-card bg-white dark:bg-[#171717] border border-gray-200 dark:border-[#2c2d2d] rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer';
+            card.className = 'scenario-card bg-white dark:bg-[#171717] border border-gray-200 dark:border-[#2c2d2d] rounded-lg p-4 sm:p-6 hover:shadow-lg transition-all duration-200 cursor-pointer';
 
             card.addEventListener('click', (e) => {
 
@@ -3402,19 +3650,19 @@
             };
             card.innerHTML = `
                 <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-br ${visuals.gradient} rounded-lg flex items-center justify-center">
+                    <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br ${visuals.gradient} rounded-lg flex items-center justify-center flex-shrink-0">
                             ${visuals.icon}
                         </div>
-                        <div>
-                            <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-semibold text-gray-900 dark:text-white">${scenario.name}</h3>
-                                <span class="text-xs px-2 py-0.5 ${modeConfig.badgeColor} text-white rounded-full font-medium">${modeConfig.badgeText}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">${scenario.name}</h3>
+                                <span class="text-xs px-2 py-0.5 ${modeConfig.badgeColor} text-white rounded-full font-medium self-start sm:self-auto">${modeConfig.badgeText}</span>
                             </div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">${scenario.requests.length} request${scenario.requests.length !== 1 ? 's' : ''}</p>
+                            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">${scenario.requests.length} request${scenario.requests.length !== 1 ? 's' : ''}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200" title="Export JSON" onclick="exportScenario(${index})">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -3434,17 +3682,17 @@
                 </div>
                 <div class="space-y-2 mb-4">
                     ${scenario.requests.slice(0, 3).map(req => `
-                        <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <span class="w-2 h-2 ${getMethodColor(req.method)} rounded-full"></span>
-                            <span class="method-${req.method.toLowerCase()}">${req.method}</span>
-                            <span>${req.path}</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            <span class="w-2 h-2 ${getMethodColor(req.method)} rounded-full flex-shrink-0"></span>
+                            <span class="method-${req.method.toLowerCase()} flex-shrink-0">${req.method}</span>
+                            <span class="truncate">${req.path}</span>
                         </div>
                     `).join('')}
                     ${scenario.requests.length > 3 ? `<p class="text-xs text-gray-500 dark:text-gray-400">+${scenario.requests.length - 3} more requests</p>` : ''}
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-500 dark:text-gray-400">${scenario.description || 'No description'}</span>
-                    <button class="bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200" onclick="runScenario(${index})">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate">${scenario.description || 'No description'}</span>
+                    <button class="bg-accent hover:bg-accent-hover text-white px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200 flex-shrink-0" onclick="runScenario(${index})">
                         Run Scenario
                     </button>
                 </div>
@@ -3469,11 +3717,18 @@
 
             document.getElementById('scenarioName').value = '';
             document.getElementById('scenarioDescription').value = '';
+            document.getElementById('mobileScenarioName').value = '';
+            document.getElementById('mobileScenarioDescription').value = '';
+            
             const endpointSearch = document.getElementById('endpointSearch');
             if (endpointSearch) endpointSearch.value = '';
+            const mobileEndpointSearch = document.getElementById('mobileEndpointSearch');
+            if (mobileEndpointSearch) mobileEndpointSearch.value = '';
 
             const waterfallMode = document.getElementById('waterfallMode');
             if (waterfallMode) waterfallMode.checked = true;
+            const mobileWaterfallMode = document.querySelector('input[name="mobileExecutionMode"][value="waterfall"]');
+            if (mobileWaterfallMode) mobileWaterfallMode.checked = true;
 
             const container = document.getElementById('scenarioRequests');
             if (container) {
@@ -3497,14 +3752,23 @@
                 title.textContent = 'Edit Scenario';
                 document.getElementById('scenarioName').value = scenario.name;
                 document.getElementById('scenarioDescription').value = scenario.description || '';
+                
+                // Also populate mobile form
+                document.getElementById('mobileScenarioName').value = scenario.name;
+                document.getElementById('mobileScenarioDescription').value = scenario.description || '';
 
                 const executionMode = scenario.executionMode || 'waterfall';
                 const waterfallMode = document.getElementById('waterfallMode');
                 const parallelMode = document.getElementById('parallelMode');
+                const mobileWaterfallMode = document.querySelector('input[name="mobileExecutionMode"][value="waterfall"]');
+                const mobileParallelMode = document.querySelector('input[name="mobileExecutionMode"][value="parallel"]');
+                
                 if (executionMode === 'parallel') {
                     if (parallelMode) parallelMode.checked = true;
+                    if (mobileParallelMode) mobileParallelMode.checked = true;
                 } else {
                     if (waterfallMode) waterfallMode.checked = true;
+                    if (mobileWaterfallMode) mobileWaterfallMode.checked = true;
                 }
                 renderScenarioRequests(scenario.requests || []);
             } else {
@@ -3531,6 +3795,7 @@
             updateLeftScenarioButton();
 
             switchScenarioTab('information');
+            switchMobileScenarioTab('information');
 
             populateAvailableEndpoints();
             modal.classList.remove('hidden');
@@ -3539,7 +3804,9 @@
 
         function populateAvailableEndpoints(searchQuery = '') {
             const container = document.getElementById('availableEndpoints');
+            const mobileContainer = document.getElementById('mobileAvailableEndpoints');
             container.innerHTML = '';
+            if (mobileContainer) mobileContainer.innerHTML = '';
             const query = searchQuery.toLowerCase();
 
             Object.keys(transformedApiData).forEach(category => {
@@ -3583,12 +3850,34 @@
                         endpointBtn.onclick = () => addEndpointToScenario(endpoint);
                     }
                     categoryDiv.appendChild(endpointBtn);
+                    
+                    // Also create mobile version
+                    if (mobileContainer) {
+                        const mobileEndpointBtn = endpointBtn.cloneNode(true);
+                        if (!isSelected) {
+                            mobileEndpointBtn.onclick = () => addEndpointToScenario(endpoint);
+                        }
+                        
+                        // Create or get mobile category div
+                        let mobileCategoryDiv = mobileContainer.querySelector(`[data-category="${category}"]`);
+                        if (!mobileCategoryDiv) {
+                            mobileCategoryDiv = document.createElement('div');
+                            mobileCategoryDiv.className = 'mb-2';
+                            mobileCategoryDiv.setAttribute('data-category', category);
+                            mobileCategoryDiv.innerHTML = `<h4 class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">${category.toUpperCase()}</h4>`;
+                            mobileContainer.appendChild(mobileCategoryDiv);
+                        }
+                        mobileCategoryDiv.appendChild(mobileEndpointBtn);
+                    }
                 });
                 container.appendChild(categoryDiv);
             });
 
             if (query && container.children.length === 0) {
                 container.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400 text-center py-4">No endpoints found</p>';
+                if (mobileContainer) {
+                    mobileContainer.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400 text-center py-4">No endpoints found</p>';
+                }
             }
         }
 
@@ -3690,36 +3979,58 @@
         }
 
         function updateLeftScenarioButton() {
-            const button = document.getElementById('leftScenarioButton');
-            if (isEditingScenario) {
-                button.textContent = 'Delete';
-                button.onclick = deleteCurrentScenario;
-            } else {
-                button.textContent = 'Reset Form';
-                button.onclick = resetScenarioForm;
-            }
+            const buttons = document.querySelectorAll('.scenario-left-btn');
+            buttons.forEach(button => {
+                if (isEditingScenario) {
+                    button.textContent = 'Delete';
+                    button.onclick = deleteCurrentScenario;
+                } else {
+                    button.textContent = 'Reset Form';
+                    button.onclick = resetScenarioForm;
+                }
+            });
         }
 
         function renderScenarioRequests(requests) {
             const container = document.getElementById('scenarioRequests');
             const emptyMessage = document.getElementById('emptyScenarioMessage');
+            const mobileContainer = document.getElementById('mobileScenarioRequests');
+            const mobileEmptyMessage = document.getElementById('mobileEmptyScenarioMessage');
 
+            // Clear desktop container
             const existingRequests = container.querySelectorAll('.scenario-request-item');
             existingRequests.forEach(item => item.remove());
+            
+            // Clear mobile container
+            if (mobileContainer) {
+                const mobileExistingRequests = mobileContainer.querySelectorAll('.scenario-request-item');
+                mobileExistingRequests.forEach(item => item.remove());
+            }
+            
             if (requests.length === 0) {
                 emptyMessage.style.display = 'block';
+                if (mobileEmptyMessage) mobileEmptyMessage.style.display = 'block';
                 return;
             }
+            
             emptyMessage.style.display = 'none';
+            if (mobileEmptyMessage) mobileEmptyMessage.style.display = 'none';
 
             requests.forEach((request, index) => {
                 const item = createScenarioRequestItem(request, index);
                 container.appendChild(item);
+                
+                // For mobile container, we need to create items optimized for mobile
+                if (mobileContainer) {
+                    const mobileItem = createMobileScenarioRequestItem(request, index);
+                    mobileContainer.appendChild(mobileItem);
+                }
             });
         }
 
         function createScenarioRequestItem(request, index) {
             const item = document.createElement('div');
+            // Desktop version - original layout
             item.className = 'scenario-request-item bg-gray-50 dark:bg-[#2c2d2d] border border-gray-200 dark:border-[#171717] rounded-lg p-3 flex items-center justify-between';
             item.innerHTML = `
                 <div class="flex items-center gap-3">
@@ -3746,6 +4057,35 @@
             return item;
         }
 
+        function createMobileScenarioRequestItem(request, index) {
+            const item = document.createElement('div');
+            // Mobile version - more compact
+            item.className = 'scenario-request-item bg-gray-50 dark:bg-[#2c2d2d] border border-gray-200 dark:border-[#171717] rounded-lg p-3';
+            item.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2 flex-1 min-w-0">
+                        <span class="text-sm text-gray-400 select-none flex-shrink-0">${index + 1}.</span>
+                        <span class="method-${request.method.toLowerCase()} text-xs px-1.5 py-0.5 rounded flex-shrink-0">${request.method}</span>
+                    </div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button class="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-1" title="Configure" onclick="configureRequest(${index})">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </button>
+                        <button class="text-gray-400 hover:text-red-500 transition-colors duration-200 p-1" title="Remove" onclick="removeRequestFromScenario(${index})">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-900 dark:text-white truncate">${request.path}</div>
+            `;
+            return item;
+        }
+
         function initScenarioManagement() {
 
             loadScenarios();
@@ -3761,8 +4101,15 @@
                 openScenarioModal();
             });
             document.getElementById('closeScenarioModal').addEventListener('click', closeScenarioModal);
-            document.getElementById('cancelScenario').addEventListener('click', closeScenarioModal);
-            document.getElementById('saveScenario').addEventListener('click', saveCurrentScenario);
+            // Handle both mobile and desktop cancel buttons
+            document.querySelectorAll('.scenario-cancel-btn').forEach(btn => {
+                btn.addEventListener('click', closeScenarioModal);
+            });
+            
+            // Handle both mobile and desktop save buttons
+            document.querySelectorAll('.scenario-save-btn').forEach(btn => {
+                btn.addEventListener('click', saveCurrentScenario);
+            });
 
             document.getElementById('scenarioAuthType').addEventListener('change', updateScenarioAuthInputs);
 
@@ -3775,19 +4122,35 @@
 
             let searchTimeout;
             document.addEventListener('input', (e) => {
-                if (e.target.id === 'endpointSearch') {
+                if (e.target.id === 'endpointSearch' || e.target.id === 'mobileEndpointSearch') {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => {
                         populateAvailableEndpoints(e.target.value);
+                        // Also populate mobile endpoints if searching from mobile
+                        if (e.target.id === 'mobileEndpointSearch') {
+                            syncEndpointsToMobile();
+                        }
                     }, 300);
                 }
 
-                if (e.target.id === 'scenarioName' || e.target.id === 'scenarioDescription') {
+                if (e.target.id === 'scenarioName' || e.target.id === 'scenarioDescription' || e.target.id === 'mobileScenarioName' || e.target.id === 'mobileScenarioDescription') {
                     if (currentScenario) {
-                        if (e.target.id === 'scenarioName') {
+                        if (e.target.id === 'scenarioName' || e.target.id === 'mobileScenarioName') {
                             currentScenario.name = e.target.value;
-                        } else if (e.target.id === 'scenarioDescription') {
+                            // Sync between mobile and desktop
+                            if (e.target.id === 'mobileScenarioName') {
+                                document.getElementById('scenarioName').value = e.target.value;
+                            } else {
+                                document.getElementById('mobileScenarioName').value = e.target.value;
+                            }
+                        } else if (e.target.id === 'scenarioDescription' || e.target.id === 'mobileScenarioDescription') {
                             currentScenario.description = e.target.value;
+                            // Sync between mobile and desktop
+                            if (e.target.id === 'mobileScenarioDescription') {
+                                document.getElementById('scenarioDescription').value = e.target.value;
+                            } else {
+                                document.getElementById('mobileScenarioDescription').value = e.target.value;
+                            }
                         }
                     }
                 }
@@ -3839,6 +4202,13 @@
 
         function saveCurrentScenario() {
             console.log('Save scenario button clicked')
+            
+            // Check if we're on mobile and sync data first
+            const isMobile = window.innerWidth < 1024;
+            if (isMobile) {
+                syncMobileToDesktop();
+            }
+            
             const name = document.getElementById('scenarioName').value.trim();
             const description = document.getElementById('scenarioDescription').value.trim();
             const executionMode = document.querySelector('input[name="executionMode"]:checked').value;
@@ -4249,12 +4619,12 @@
                     
                     requestDiv.innerHTML = `
                         <div class="flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-[#3c3d3d] rounded p-2 -m-2 transition-colors duration-200" onclick="toggleRequestDetails(${reqIndex})">
-                            <div class="flex items-center gap-3">
-                                <span class="w-2 h-2 ${methodColor} rounded-full"></span>
-                                <span class="font-mono text-sm font-medium method-${request.method.toLowerCase()}">${request.method}</span>
-                                <span class="text-sm text-gray-600 dark:text-gray-400">${request.path}</span>
+                            <div class="flex items-center gap-3 min-w-0 flex-1">
+                                <span class="w-2 h-2 ${methodColor} rounded-full flex-shrink-0"></span>
+                                <span class="font-mono text-sm font-medium method-${request.method.toLowerCase()} flex-shrink-0">${request.method}</span>
+                                <span class="text-sm text-gray-600 dark:text-gray-400 truncate" title="${request.path}">${request.path}</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-shrink-0">
                                 ${hasConfig ? '<span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">Configured</span>' : ''}
                                 <span class="text-xs text-gray-500 dark:text-gray-400">#${reqIndex + 1}</span>
                                 <svg class="w-4 h-4 text-gray-400 transform transition-transform duration-200 collapse-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4707,27 +5077,27 @@
             showNotification(`Starting scenario: ${scenario.name} (${executionMode} mode)`, 'info');
 
             const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4';
             modal.innerHTML = `
-                <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
-                    <div class="p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex items-center justify-between">
-                        <div>
-                            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Running Scenario: ${scenario.name}</h2>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${enabledRequests.length} requests • ${executionMode} execution</p>
+                <div class="bg-white dark:bg-[#171717] rounded-lg shadow-xl max-w-6xl w-full max-h-full sm:max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-6 border-b border-gray-200 dark:border-[#2c2d2d] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">Running Scenario: ${scenario.name}</h2>
+                            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">${enabledRequests.length} requests • ${executionMode} execution</p>
                         </div>
-                        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200" onclick="this.closest('.fixed').remove()">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200 flex-shrink-0" onclick="this.closest('.fixed').remove()">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
-                    <div class="p-6 overflow-y-auto max-h-[70vh]">
+                    <div class="flex-1 p-3 sm:p-6 overflow-y-auto min-h-0">
                         <div id="scenarioResults" class="space-y-4">
                             
                         </div>
                     </div>
-                    <div class="p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex justify-end">
-                        <button class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md" onclick="this.closest('.fixed').remove()">Close</button>
+                    <div class="flex-shrink-0 p-3 sm:p-6 border-t border-gray-200 dark:border-[#2c2d2d] flex justify-end">
+                        <button class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md w-full sm:w-auto" onclick="this.closest('.fixed').remove()">Close</button>
                     </div>
                 </div>
             `;
@@ -4778,13 +5148,13 @@
 
         function createResultItem(request, index) {
             const resultItem = document.createElement('div');
-            resultItem.className = 'border border-gray-200 dark:border-[#2c2d2d] rounded-lg p-4';
+            resultItem.className = 'border border-gray-200 dark:border-[#2c2d2d] rounded-lg p-3 sm:p-4';
             resultItem.innerHTML = `
                 <div class="flex items-center gap-3 mb-3">
-                    <span class="text-lg text-gray-400">${index + 1}.</span>
-                    <span class="method-${request.method.toLowerCase()} text-xs px-2 py-1 rounded">${request.method}</span>
-                    <span class="text-sm text-gray-900 dark:text-white">${request.path}</span>
-                    <div class="ml-auto">
+                    <span class="text-lg text-gray-400 flex-shrink-0">${index + 1}.</span>
+                    <span class="method-${request.method.toLowerCase()} text-xs px-2 py-1 rounded flex-shrink-0">${request.method}</span>
+                    <span class="text-sm text-gray-900 dark:text-white truncate min-w-0 flex-1" title="${request.path}">${request.path}</span>
+                    <div class="flex-shrink-0 status-container">
                         <div class="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 </div>
@@ -4855,29 +5225,36 @@
 
                 const statusClass = response.ok ? 'text-green-600' : 'text-red-600';
                 const statusText = response.ok ? 'Success' : 'Error';
-                resultItem.querySelector('.ml-auto').innerHTML = `
-                    <span class="${statusClass} text-sm font-medium">${response.status} ${statusText}</span>
-                    <span class="text-xs text-gray-500 ml-2">${responseTime}ms</span>
+                const statusContainer = resultItem.querySelector('.status-container');
+                statusContainer.innerHTML = `
+                    <div class="text-right">
+                        <div class="${statusClass} text-sm font-medium">${response.status} ${statusText}</div>
+                        <div class="text-xs text-gray-500">${responseTime}ms</div>
+                    </div>
                 `;
                 const resultContent = resultItem.querySelector('.result-content');
                 resultContent.innerHTML = `
                     <div class="mt-3 p-3 bg-gray-50 dark:bg-[#2c2d2d] rounded">
-                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Response (${response.status}) - ${fullUrl}</h4>
-                        <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-32 overflow-y-auto">${typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2)}</pre>
+                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Response (${response.status})</h4>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2 break-all" title="${fullUrl}">${fullUrl}</div>
+                        <pre class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-32 overflow-y-auto overflow-x-auto">${typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2)}</pre>
                     </div>
                 `;
                 resultContent.classList.remove('hidden');
             } catch (error) {
                 console.error('Request failed:', error);
 
-                resultItem.querySelector('.ml-auto').innerHTML = `
-                    <span class="text-red-600 text-sm font-medium">Failed</span>
+                const statusContainer = resultItem.querySelector('.status-container');
+                statusContainer.innerHTML = `
+                    <div class="text-right">
+                        <div class="text-red-600 text-sm font-medium">Failed</div>
+                    </div>
                 `;
                 const resultContent = resultItem.querySelector('.result-content');
                 resultContent.innerHTML = `
                     <div class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded">
                         <h4 class="text-sm font-medium text-red-700 dark:text-red-300 mb-2">Error</h4>
-                        <pre class="text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap">${error.message}</pre>
+                        <pre class="text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap break-all">${error.message}</pre>
                     </div>
                 `;
                 resultContent.classList.remove('hidden');

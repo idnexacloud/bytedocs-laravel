@@ -59,7 +59,19 @@ class LaravelParser
             return $this->parseClosureHandler($route);
         }
 
-        return $this->parseControllerHandler($action['controller']);
+        $controller = $action['controller'];
+        
+        // Handle array format: [ControllerClass::class, 'method']
+        if (is_array($controller)) {
+            if (count($controller) >= 2) {
+                return $this->parseControllerHandler($controller[0] . '@' . $controller[1]);
+            } elseif (count($controller) === 1) {
+                return $this->parseControllerHandler($controller[0]);
+            }
+            return $this->parseClosureHandler($route);
+        }
+
+        return $this->parseControllerHandler($controller);
     }
 
     /**
@@ -81,7 +93,20 @@ class LaravelParser
      */
     protected function parseControllerHandler(string $controllerAction): array
     {
-        [$controller, $method] = explode('@', $controllerAction);
+        // Handle different controller action formats
+        if (str_contains($controllerAction, '@')) {
+            // Old format: App\Http\Controllers\UserController@index
+            $parts = explode('@', $controllerAction);
+            if (count($parts) !== 2) {
+                return $this->generateDefaultInfo('unknown');
+            }
+            [$controller, $method] = $parts;
+        } else {
+            // New format: App\Http\Controllers\UserController::class
+            // Default to __invoke method for single callable
+            $controller = $controllerAction;
+            $method = '__invoke';
+        }
         
         $cacheKey = $controller . '@' . $method;
         
