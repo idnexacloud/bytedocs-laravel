@@ -3,6 +3,8 @@
 [![Latest Stable Version](https://poser.pugx.org/idnexacloud/bytedocs-laravel/v/stable)](https://packagist.org/packages/idnexacloud/bytedocs-laravel)
 [![License](https://poser.pugx.org/idnexacloud/bytedocs-laravel/license)](https://packagist.org/packages/idnexacloud/bytedocs-laravel)
 
+![enter image description here](https://res.cloudinary.com/aibnuhibban/image/upload/v1758595720/Screenshot_2025-09-22_134933_d79jsi.png)
+
 **ByteDocs Laravel** is a modern alternative to Swagger with better design, auto-detection, and AI integration for Laravel applications. It automatically generates beautiful API documentation from your Laravel routes with zero configuration required.
 
 ## Features
