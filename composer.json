@@ -1,5 +1,5 @@
 {
-    "name": "bytedocs/laravel-bytedocs",
+    "name": "idnexacloud/laravel-bytedocs",
     "description": "Alternative Swagger with better design, auto-detect routes, and AI integration for Laravel",
     "type": "library",
     "keywords": ["laravel", "api", "documentation", "swagger", "openapi", "bytedocs", "auto-detect", "ai"],
