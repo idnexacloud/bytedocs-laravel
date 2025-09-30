@@ -1515,7 +1515,7 @@ class APIDocs
         $this->generate();
 
         $openAPI = [
-            'openapi' => '3.0.0',
+            'openapi' => '3.1.0',
             'info' => [
                 'title' => $this->documentation->info->title,
                 'version' => $this->documentation->info->version,
@@ -1605,6 +1605,17 @@ class APIDocs
 
         $openAPI['paths'] = $paths;
         return $openAPI;
+    }
+
+    /**
+     * Get OpenAPI YAML format
+     */
+    public function getOpenAPIYAML(): string
+    {
+        $openAPIArray = $this->getOpenAPIJSON();
+
+        // Convert array to YAML using Symfony YAML component
+        return \Symfony\Component\Yaml\Yaml::dump($openAPIArray, 10, 2, \Symfony\Component\Yaml\Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK);
     }
 
     /**

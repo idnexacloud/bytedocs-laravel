@@ -121,6 +121,19 @@ class DocsController extends Controller
     }
 
     /**
+     * Return OpenAPI specification as YAML
+     */
+    public function openapiYaml()
+    {
+        $yaml = $this->docs->getOpenAPIYAML();
+
+        return response($yaml, 200)
+            ->header('Content-Type', 'application/x-yaml')
+            ->header('Content-Disposition', 'attachment; filename="openapi.yaml"')
+            ->header('Access-Control-Allow-Origin', '*');
+    }
+
+    /**
      * Handle AI chat requests
      */
     public function chat(Request $request): JsonResponse
