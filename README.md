@@ -1,22 +1,27 @@
+
 # ByteDocs Laravel Package
 
-[![Latest Stable Version](https://poser.pugx.org/idnexacloud/bytedocs-laravel/v/stable)](https://packagist.org/packages/idnexacloud/bytedocs-laravel)
-[![License](https://poser.pugx.org/idnexacloud/bytedocs-laravel/license)](https://packagist.org/packages/idnexacloud/bytedocs-laravel)
+[![Latest Stable Version](https://poser.pugx.org/idnexacloud/bytedocs-laravel/v/stable)](https://packagist.org/packages/idnexacloud/laravel-bytedocs)
+[![License](https://poser.pugx.org/idnexacloud/bytedocs-laravel/license)](https://packagist.org/packages/idnexacloud/laravel-bytedocs)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.0-blue.svg)](https://php.net/)
+[![Laravel Version](https://img.shields.io/badge/laravel-%3E%3D9.0-red.svg)](https://laravel.com/)
 
-![enter image description here](https://res.cloudinary.com/aibnuhibban/image/upload/v1758595720/Screenshot_2025-09-22_134933_d79jsi.png)
+![bytedocs web here](https://ik.imagekit.io/wos4f8pli/bytedocs-web.png)
 
 **ByteDocs Laravel** is a modern alternative to Swagger with better design, auto-detection, and AI integration for Laravel applications. It automatically generates beautiful API documentation from your Laravel routes with zero configuration required.
 
 ## Features
 
 - 🚀 **Auto Route Detection** - Automatically discovers and documents all your Laravel routes
-- 🎨 **Beautiful Modern UI** - Clean, responsive interface with dark mode support  
+- 🎨 **Beautiful Modern UI** - Clean, responsive interface with dark mode support
 - 🤖 **AI Integration** - Built-in AI assistant to help users understand your API
 - 📱 **Mobile Responsive** - Works perfectly on all device sizes
 - 🔍 **Advanced Search** - Quickly find endpoints with powerful search
-- 📊 **OpenAPI Compatible** - Generates standard OpenAPI 3.0 specifications
+- 📊 **OpenAPI Compatible** - Exports standard OpenAPI 3.1.0 specification in JSON and YAML formats
+- 🔐 **Authentication Support** - Protect your docs with session-based authentication
 - ⚡ **Zero Configuration** - Works out of the box with sensible defaults
 - 🔧 **Highly Customizable** - Configure everything to match your needs
+- ⚙️ **FormRequest Auto-Detection** - Automatically parses Laravel FormRequest validation rules
 
 ## Installation
 
@@ -57,7 +62,7 @@ class UserController extends Controller
     /**
      * Get all users with pagination support
      * @param page query integer false "Page number for pagination"
-     * @param limit query integer false "Number of users per page"  
+     * @param limit query integer false "Number of users per page"
      * @param search query string false "Search term to filter users"
      */
     public function index(Request $request)
@@ -79,7 +84,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        // Your implementation  
+        // Your implementation
     }
 }
 ```
@@ -93,15 +98,15 @@ class UserController extends Controller
 
 return [
     'title' => 'My API Documentation',
-    'version' => '1.0.0', 
+    'version' => '1.0.0',
     'description' => 'Comprehensive API for my application',
-    
+
     'base_urls' => [
         ['name' => 'Production', 'url' => 'https://api.myapp.com'],
         ['name' => 'Staging', 'url' => 'https://staging-api.myapp.com'],
         ['name' => 'Local', 'url' => 'http://localhost:8000'],
     ],
-    
+
     'docs_path' => '/docs',
     'auto_detect' => true,
 ];
@@ -118,7 +123,7 @@ Enable AI assistance for your API documentation:
     'enabled' => true,
     'provider' => 'openai', // openai, gemini, openrouter, claude
     'api_key' => env('BYTEDOCS_AI_API_KEY'),
-    
+
     'features' => [
         'chat_enabled' => true,
         'model' => 'gpt-4o-mini',
@@ -149,11 +154,11 @@ BYTEDOCS_AI_API_KEY=sk-your-api-key-here
 ]
 ```
 
-### Google Gemini  
+### Google Gemini
 ```php
 'ai' => [
     'provider' => 'gemini',
-    'api_key' => env('GEMINI_API_KEY'), 
+    'api_key' => env('GEMINI_API_KEY'),
     'features' => [
         'model' => 'gemini-1.5-flash', // or gemini-1.5-pro
     ],
@@ -174,7 +179,7 @@ BYTEDOCS_AI_API_KEY=sk-your-api-key-here
 ### Claude
 ```php
 'ai' => [
-    'provider' => 'claude', 
+    'provider' => 'claude',
     'api_key' => env('ANTHROPIC_API_KEY'),
     'features' => [
         'model' => 'claude-3-sonnet-20240229',
@@ -205,6 +210,22 @@ ByteDocs::addRouteInfo(new RouteInfo(
 ));
 ```
 
+### Export OpenAPI Specifications
+
+```php
+use ByteDocs\Laravel\Facades\ByteDocs;
+
+// Get OpenAPI JSON
+$openAPIJSON = ByteDocs::getOpenAPIJSON();
+
+// Get OpenAPI YAML
+$openAPIYAML = ByteDocs::getOpenAPIYAML();
+
+// Save to file
+file_put_contents(storage_path('api-docs/openapi.yaml'), $openAPIYAML);
+file_put_contents(storage_path('api-docs/openapi.json'), json_encode($openAPIJSON, JSON_PRETTY_PRINT));
+```
+
 ### Exclude Routes
 
 ```php
@@ -212,7 +233,7 @@ ByteDocs::addRouteInfo(new RouteInfo(
 
 'exclude_paths' => [
     '_ignition',
-    'telescope', 
+    'telescope',
     'horizon',
     'admin/*',
     'internal/*',
@@ -237,10 +258,11 @@ ByteDocs::addRouteInfo(new RouteInfo(
 
 Once installed, ByteDocs provides these endpoints:
 
-- `GET /docs` - Main documentation interface
-- `GET /docs/api-data.json` - Raw documentation data  
-- `GET /docs/openapi.json` - OpenAPI 3.0 specification
-- `POST /docs/chat` - AI chat endpoint (if enabled)
+- `GET /docs` - Main documentation interface with beautiful UI
+- `GET /docs/api-data.json` - Raw documentation data
+- `GET /docs/openapi.json` - OpenAPI 3.1.0 specification (JSON format)
+- `GET /docs/openapi.yaml` - OpenAPI 3.1.0 specification (YAML format)
+- `POST /docs/chat` - AI chat endpoint (if AI is enabled)
 
 ## Environment Variables
 
@@ -253,7 +275,7 @@ BYTEDOCS_PATH="/docs"
 BYTEDOCS_AUTO_DETECT=true
 
 # Base URLs
-BYTEDOCS_PRODUCTION_URL="https://api.myapp.com"  
+BYTEDOCS_PRODUCTION_URL="https://api.myapp.com"
 BYTEDOCS_STAGING_URL="https://staging-api.myapp.com"
 BYTEDOCS_LOCAL_URL="http://localhost:8000"
 
@@ -284,7 +306,7 @@ Document your routes with PHPDoc comments:
 
 **Parameters:**
 - `parameter_name`: Name of the parameter
-- `location`: `path`, `query`, `header`, or `body`  
+- `location`: `path`, `query`, `header`, or `body`
 - `type`: `string`, `integer`, `boolean`, `array`, etc.
 - `required`: `true` or `false`
 - `"Description"`: Human-readable description in quotes
@@ -294,7 +316,7 @@ Document your routes with PHPDoc comments:
 // Path parameter
 @param id path integer true "User ID"
 
-// Query parameter  
+// Query parameter
 @param page query integer false "Page number"
 @param search query string false "Search term"
 
@@ -323,5 +345,9 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 ## Support
 
 - 📖 [Documentation](https://github.com/idnexacloud/bytedocs-laravel)
-- 🐛 [Report Issues](https://github.com/idnexacloud/bytedocs-laravel/issues)  
-- 💬 [Discussions](https://github.com/idnexacloud/bytedocs-laravel/discussions)
+- 🐛 [Report Issues](https://github.com/idnexacloud/bytedocs-laravel/issues)
+- 💬 [GitHub Discussions](https://github.com/idnexacloud/bytedocs-laravel/discussions)
+
+---
+
+**Made with ❤️ for the Laravel community**
