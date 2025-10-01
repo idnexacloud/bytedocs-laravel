@@ -68,21 +68,6 @@ abstract class Client
         // Rough token estimation (1 token ≈ 4 characters for English)
         $estimatedTokens = (strlen($systemContext) + strlen($userMessage)) / 4;
         
-        \Log::info('🤖 LLM Request Debug', [
-            'provider' => $this->getProvider(),
-            'model' => $data['model'] ?? 'unknown',
-            'message_count' => count($data['messages'] ?? []),
-            'system_context_length' => strlen($systemContext),
-            'user_message_length' => strlen($userMessage),
-            'estimated_input_tokens' => round($estimatedTokens),
-            'user_message' => $userMessage
-        ]);
-
-        // Log the FULL context separately so you can see what's actually sent to LLM
-        \Log::info('🤖 FULL SYSTEM CONTEXT SENT TO LLM', [
-            'provider' => $this->getProvider(),
-            'full_system_context' => $systemContext
-        ]);
 
         $client = new \GuzzleHttp\Client();
 
@@ -107,26 +92,9 @@ abstract class Client
             $compressionRatio = $estimatedTokens > 0 ? round($inputTokens / $estimatedTokens, 2) : 1;
             $outputEfficiency = $outputTokens > 0 ? round($responseLength / $outputTokens, 2) : 0;
             
-            \Log::info('🤖 LLM Response Debug', [
-                'provider' => $this->getProvider(),
-                'success' => !isset($result['error']),
-                'response_length' => $responseLength,
-                'actual_input_tokens' => $inputTokens,
-                'actual_output_tokens' => $outputTokens,
-                'total_tokens_used' => $actualTokens,
-                'estimated_vs_actual_ratio' => $compressionRatio,
-                'chars_per_output_token' => $outputEfficiency,
-                'context_compression_saved' => max(0, round($estimatedTokens - $inputTokens)),
-                'error' => $result['error']['message'] ?? null
-            ]);
 
             return $result;
         } catch (\Exception $e) {
-            \Log::error('🤖 LLM Request Failed', [
-                'provider' => $this->getProvider(),
-                'error' => $e->getMessage(),
-                'url' => $url
-            ]);
             
             return [
                 'error' => $e->getMessage(),

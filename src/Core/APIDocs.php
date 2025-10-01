@@ -311,7 +311,7 @@ class APIDocs
             }
         }
         
-        // If no matches found, try simpler pattern for debugging
+        // If no matches found, try simpler pattern
         if (empty($rules)) {
             // Try to match simpler patterns
             $simplePattern = '/([\'"])([^\'"]*)[\'"]\\s*=>\\s*([^,]+)/';
@@ -1183,7 +1183,7 @@ class APIDocs
      */
     protected function extractRouteContext(array $resourceInfo, $route = null): array
     {
-        $path = '/api/v1/resource'; // Default path
+        $path = '/api/resource'; // Default path
         
         if ($route && method_exists($route, 'path')) {
             $path = $route->path;
@@ -1256,7 +1256,7 @@ class APIDocs
         $baseUrl = config('app.url', 'http://127.0.0.1:8000');
         $resourcePath = ($routeContext && isset($routeContext['path'])) 
             ? $routeContext['path'] 
-            : '/api/v1/resource';
+            : '/api/resource';
         
         // Generate realistic pagination values
         $total = count($data) > 10 ? rand(50, 200) : count($data);
@@ -1427,7 +1427,7 @@ class APIDocs
     {
         $parts = array_filter(explode('/', trim($path, '/')));
 
-        // For API paths like /api/v1/users, extract the resource name (users)
+        // For API paths, extract the resource name
         foreach (array_reverse($parts) as $part) {
             if (!empty($part) && !str_starts_with($part, '{') && !str_contains($part, '{')) {
                 // Skip version numbers and api prefixes
@@ -1515,7 +1515,7 @@ class APIDocs
         $this->generate();
 
         $openAPI = [
-            'openapi' => '3.1.0',
+            'openapi' => '3.0.3',
             'info' => [
                 'title' => $this->documentation->info->title,
                 'version' => $this->documentation->info->version,
@@ -1555,12 +1555,11 @@ class APIDocs
                     'description' => $endpoint->description,
                     'tags' => [$section->name],
                     'operationId' => $endpoint->id,
-                    'parameters' => [],
-                    'responses' => [],
                 ];
 
-                // Add parameters
+                // Add parameters - only if they exist
                 if (!empty($endpoint->parameters)) {
+                    $operation['parameters'] = [];
                     foreach ($endpoint->parameters as $param) {
                         $operation['parameters'][] = [
                             'name' => $param->name,
@@ -1575,27 +1574,62 @@ class APIDocs
 
                 // Add request body
                 if ($endpoint->requestBody) {
+                    $requestBodySchema = $endpoint->requestBody->schema;
+                    if (!is_array($requestBodySchema) || empty($requestBodySchema)) {
+                        $requestBodySchema = ['type' => 'object'];
+                    }
+                    
                     $operation['requestBody'] = [
                         'required' => $endpoint->requestBody->required,
                         'content' => [
                             $endpoint->requestBody->contentType => [
-                                'schema' => $endpoint->requestBody->schema,
+                                'schema' => $requestBodySchema,
                                 'example' => $endpoint->requestBody->example,
                             ],
                         ],
                     ];
                 }
 
-                // Add responses
-                foreach ($endpoint->responses as $statusCode => $response) {
-                    $operation['responses'][$statusCode] = [
-                        'description' => $response->description,
+                // Add responses - ensure at least one response exists
+                $operation['responses'] = [];
+                if (!empty($endpoint->responses)) {
+                    foreach ($endpoint->responses as $statusCode => $response) {
+                        $responseData = [
+                            'description' => $response->description,
+                        ];
+                        
+                        // Only add content if there's an example or schema
+                        if ($response->example !== null || $response->schema !== null) {
+                            $contentData = [];
+                            
+                            // Ensure schema is always an object
+                            $schema = $response->schema;
+                            if (!is_array($schema) || empty($schema)) {
+                                $schema = ['type' => 'object'];
+                            }
+                            
+                            $contentData['schema'] = $schema;
+                            
+                            if ($response->example !== null) {
+                                $contentData['example'] = $response->example;
+                            }
+                            
+                            $responseData['content'] = [
+                                'application/json' => $contentData
+                            ];
+                        }
+                        
+                        $operation['responses'][$statusCode] = $responseData;
+                    }
+                } else {
+                    // Add default 200 response if none exist
+                    $operation['responses']['200'] = [
+                        'description' => 'Success',
                         'content' => [
                             'application/json' => [
-                                'schema' => $response->schema,
-                                'example' => $response->example,
-                            ],
-                        ],
+                                'schema' => ['type' => 'object']
+                            ]
+                        ]
                     ];
                 }
 
@@ -1688,7 +1722,6 @@ class APIDocs
         $cachedContext = $this->getCachedContext($cacheKey);
         
         if ($cachedContext && !$this->shouldBypassCache($userQuestion)) {
-            \Log::info('🚀 Context Cache HIT', ['cache_key' => substr($cacheKey, 0, 20), 'saved_processing' => true]);
             return $cachedContext;
         }
 
@@ -1715,7 +1748,6 @@ RULES: Use only listed endpoints/params. No invention.",
 
         // Cache the context for similar future questions
         $this->cacheContext($cacheKey, $contextText);
-        \Log::info('🔄 Context Cache MISS', ['cache_key' => substr($cacheKey, 0, 20), 'cached_for_future' => true]);
 
         return $contextText;
     }
@@ -1768,7 +1800,7 @@ RULES: Use only listed endpoints/params. No invention.",
                 return cache()->get($cacheKey);
             }
         } catch (\Exception $e) {
-            \Log::warning('Context cache read failed', ['error' => $e->getMessage()]);
+            // Silently fail cache read
         }
         
         return null;
@@ -1785,7 +1817,7 @@ RULES: Use only listed endpoints/params. No invention.",
                 cache()->put($cacheKey, $context, 3600);
             }
         } catch (\Exception $e) {
-            \Log::warning('Context cache write failed', ['error' => $e->getMessage()]);
+            // Silently fail cache write
         }
     }
 

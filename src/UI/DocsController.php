@@ -41,9 +41,11 @@ class DocsController extends Controller
     {
         $routes = \Route::getRoutes();
         $detectedCount = 0;
+        $skippedRoutes = [];
         
         foreach ($routes as $route) {
             if ($this->shouldSkipRoute($route)) {
+                $skippedRoutes[] = $route->uri() . ' (' . implode(', ', $route->methods()) . ')';
                 continue;
             }
             
@@ -69,6 +71,11 @@ class DocsController extends Controller
         if (in_array('HEAD', $methods) && count($methods) === 1) {
             return true;
         }
+        
+        // Skip OPTIONS only routes
+        if (in_array('OPTIONS', $methods) && count($methods) === 1) {
+            return true;
+        }
 
         // Skip ByteDocs routes
         $docsPath = trim(config('bytedocs.docs_path', '/docs'), '/');
@@ -77,7 +84,7 @@ class DocsController extends Controller
         }
 
         // Skip Laravel system routes
-        $systemRoutes = ['_ignition', 'sanctum', 'api/documentation', 'telescope', 'horizon'];
+        $systemRoutes = ['_ignition', 'sanctum', 'telescope', 'horizon'];
         foreach ($systemRoutes as $systemRoute) {
             if (str_starts_with($uri, $systemRoute)) {
                 return true;
@@ -94,6 +101,11 @@ class DocsController extends Controller
 
         // Skip Laravel internal routes
         if ($uri === '/' && empty($route->getName()) && in_array('GET', $methods)) {
+            return true;
+        }
+        
+        // Skip fallback routes
+        if (str_contains($uri, '{fallbackPlaceholder}')) {
             return true;
         }
 
@@ -116,6 +128,9 @@ class DocsController extends Controller
      */
     public function openapi(): JsonResponse
     {
+        // Force route detection and generation before exporting
+        $this->detectAndGenerateRoutes();
+        
         return response()->json($this->docs->getOpenAPIJSON())
             ->header('Access-Control-Allow-Origin', '*');
     }
@@ -125,6 +140,9 @@ class DocsController extends Controller
      */
     public function openapiYaml()
     {
+        // Force route detection and generation before exporting
+        $this->detectAndGenerateRoutes();
+        
         $yaml = $this->docs->getOpenAPIYAML();
 
         return response($yaml, 200)

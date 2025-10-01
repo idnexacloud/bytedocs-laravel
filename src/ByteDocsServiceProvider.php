@@ -53,13 +53,8 @@ class ByteDocsServiceProvider extends ServiceProvider
             __DIR__ . '/../resources/views' => resource_path('views/vendor/bytedocs'),
         ], 'bytedocs-views');
 
-        // Register routes
+        // Register only ByteDocs internal routes
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        
-        // Register API routes for testing
-        if (file_exists(__DIR__ . '/../routes/api.php')) {
-            Route::prefix('api')->middleware('api')->group(__DIR__ . '/../routes/api.php');
-        }
 
         // Load views
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'bytedocs');

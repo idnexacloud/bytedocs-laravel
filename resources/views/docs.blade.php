@@ -846,7 +846,7 @@
                             <div class="flex gap-2">
                                 <button
                                     class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors duration-200"
-                                    id="exportJsonBtnMobile" title="Export OpenAPI JSON">
+                                    id="exportYamlBtnMobile" title="Export OpenAPI YAML">
                                     <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
@@ -877,11 +877,11 @@
                         <div class="flex gap-3">
                             <button
                                 class="px-4 py-1 border border-gray-300 dark:border-[#212121] rounded-md bg-white dark:bg-black text-gray-900 dark:text-white text-sm hover:bg-gray-50 dark:hover:bg-white dark:hover:text-black transition-colors duration-200 flex items-center gap-2"
-                                id="exportJsonBtn" title="Export OpenAPI JSON">
+                                id="exportYamlBtn" title="Export OpenAPI YAML">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
-                                Export JSON
+                                Export OpenAPI.yaml
                             </button>
                             <button
                                 class="px-4 py-1 bg-accent text-white rounded-md text-sm hover:bg-accent-hover transition-colors duration-200"
@@ -1811,7 +1811,7 @@
                     button.innerHTML = originalHTML;
                 }, 2000);
             }).catch(err => {
-                console.error('Failed to copy: ', err);
+                // Copy failed silently
 
                 const textArea = document.createElement('textarea');
                 textArea.value = text;
@@ -2854,29 +2854,33 @@
                 settingsBtnSidebar.addEventListener('click', openSettings);
             }
 
-            function exportOpenApiJson() {
+            function exportOpenApiYaml() {
                 try {
-                    const timestamp = new Date().toISOString().split('T')[0];
-                    const filename = `openapi-${apiData?.info?.title?.toLowerCase().replace(/\s+/g, '-') || 'api'}-${timestamp}.json`;
-                    const dataStr = JSON.stringify(apiData, null, 2);
-                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    // Use direct route URL
+                    const yamlUrl = '{{ route('bytedocs.openapi.yaml') }}';
+                    
+                    // Create a temporary link and trigger download
                     const link = document.createElement('a');
-                    link.href = URL.createObjectURL(dataBlob);
-                    link.download = filename;
+                    link.href = yamlUrl;
+                    link.target = '_blank';
+                    link.download = 'openapi.yaml';
+                    document.body.appendChild(link);
                     link.click();
-                    showNotification(`OpenAPI JSON exported as ${filename}`, 'success', 3000);
+                    document.body.removeChild(link);
+                    
+                    showNotification('OpenAPI YAML export initiated', 'success', 3000);
                 } catch (error) {
-                    showNotification('Failed to export OpenAPI JSON', 'error', 3000);
-                    console.error('Export error:', error);
+                    showNotification('Failed to export OpenAPI YAML', 'error', 3000);
+                    // Export failed silently
                 }
             }
-            const exportJsonBtn = document.getElementById('exportJsonBtn');
-            const exportJsonBtnMobile = document.getElementById('exportJsonBtnMobile');
-            if (exportJsonBtn) {
-                exportJsonBtn.addEventListener('click', exportOpenApiJson);
+            const exportYamlBtn = document.getElementById('exportYamlBtn');
+            const exportYamlBtnMobile = document.getElementById('exportYamlBtnMobile');
+            if (exportYamlBtn) {
+                exportYamlBtn.addEventListener('click', exportOpenApiYaml);
             }
-            if (exportJsonBtnMobile) {
-                exportJsonBtnMobile.addEventListener('click', exportOpenApiJson);
+            if (exportYamlBtnMobile) {
+                exportYamlBtnMobile.addEventListener('click', exportOpenApiYaml);
             }
             closeSettings.addEventListener('click', () => {
                 settingsModal.classList.add('hidden');
@@ -3265,11 +3269,6 @@
                     // No need to send context or endpoint from frontend
                 };
 
-                // Debug: Log the chat request payload
-                console.log('🔍 Frontend Chat Request Payload:', {
-                    message: chatRequest.message,
-                    note: 'Backend will auto-provide complete API context'
-                });
 
                 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 const response = await fetch(`${window.location.origin}${config.docsPath || '/docs'}/chat`, {
@@ -3290,7 +3289,7 @@
                     addChatMessage(data.response || 'Sorry, I couldn\'t generate a response.', 'ai');
                 }
             } catch (error) {
-                console.error('Chat error:', error);
+                // Chat error occurred silently
                 hideTypingIndicator();
 
                 addChatMessage('Sorry, I\'m having trouble connecting to the AI service right now. Please try again later.', 'ai');
@@ -4201,7 +4200,6 @@
         }
 
         function saveCurrentScenario() {
-            console.log('Save scenario button clicked')
             
             // Check if we're on mobile and sync data first
             const isMobile = window.innerWidth < 1024;
@@ -4214,9 +4212,6 @@
             const executionMode = document.querySelector('input[name="executionMode"]:checked').value;
 
             saveScenarioAuthentication();
-            console.log('Scenario name:', name)
-            console.log('Current scenario:', currentScenario)
-            console.log('Execution mode:', executionMode)
             if (!name) {
                 showNotification('Please enter a scenario name', 'error');
                 return;
@@ -4236,7 +4231,6 @@
                 created: isEditingScenario ? currentScenario.created : new Date().toISOString(),
                 modified: new Date().toISOString()
             };
-            console.log('Saving scenario:', scenario)
             if (isEditingScenario) {
                 const index = scenarios.findIndex(s => s.id === currentScenario.id);
                 if (index !== -1) {
@@ -5242,7 +5236,7 @@
                 `;
                 resultContent.classList.remove('hidden');
             } catch (error) {
-                console.error('Request failed:', error);
+                // Request failed silently
 
                 const statusContainer = resultItem.querySelector('.status-container');
                 statusContainer.innerHTML = `
