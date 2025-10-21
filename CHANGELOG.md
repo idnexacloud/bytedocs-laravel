@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-21
+
+### Added
+- **k6 Performance Testing**: Local k6 load testing integration with OS detection (Windows/macOS/Linux)
+- **K6Runner Class**: New `ByteDocs\Laravel\Performance\K6Runner` for executing k6 performance tests
+- **Custom k6 Path Support**: Optional custom k6 executable path with localStorage persistence
+- **Multi-Stage Load Testing**: Flexible stage management with add/remove functionality for ramp-up/down patterns
+- **Three-Tab Results Display**:
+  - **Computer View**: Raw k6 metrics and output
+  - **Analyst Result**: Automated performance grading system (A-F) with key metrics analysis
+  - **AI Analyst**: LLM-powered performance analysis with actionable recommendations
+- **Multi-Language AI Analysis**: Support for 10 languages (English, Indonesian, Chinese, Japanese, Korean, Spanish, French, German, Portuguese, Russian)
+- **Markdown Rendering**: Safe markdown rendering using marked.js and DOMPurify for AI analysis
+- **Enhanced k6 Debugging**: Detailed HTTP request/response logging with status codes and error messages
+- **HTTP Traffic Detection**: Automatic validation to ensure k6 scripts actually hit endpoints
+- **Performance Routes**: New endpoints for k6 test execution, script generation, system info, and AI analysis
+
+### Enhanced
+- **Error Display**: Persistent error UI with dismiss functionality instead of temporary notifications
+- **Tab Styling**: Raised tab effect with clear visual indicators for active tabs
+- **Table Styling**: Professional table formatting in markdown with zebra striping, hover effects, and dark mode support
+- **Duration Settings**: Default changed to seconds, removed hours option for better UX
+- **k6 Script Generation**: Auto-detection of HTTP methods (lowercase), automatic Content-Type headers for POST/PUT/PATCH
+- **Performance Analysis Prompt**: Structured AI prompts with 5-point analysis (assessment, findings, issues, recommendations, scalability)
+- **HR Spacing**: Improved horizontal rule spacing (2rem) in markdown content
+
+### Fixed
+- k6 path detection on Windows with fallback to common installation locations (Chocolatey, Scoop, WinGet)
+- HTTP method case sensitivity in k6 scripts (now uses lowercase: http.get(), http.post(), etc.)
+- Consistent performance analysis across all result tabs
+- Tab active state visibility with background and border styling
+
+### Technical
+- Added `K6Runner` class with cross-platform support
+- New validation rules for performance test configurations
+- Language parameter support in AI analysis endpoint
+- LocalStorage integration for user preferences (k6 path, analysis language)
+- Enhanced metrics parsing with data transfer detection
+
 ## [1.1.0] - 2025-10-21
 
 ### Added

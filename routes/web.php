@@ -12,6 +12,10 @@ Route::middleware(['web', 'bytedocs.auth'])->group(function () use ($docsPath) {
     Route::get($docsPath . '/openapi.json', [DocsController::class, 'openapi'])->name('bytedocs.openapi');
     Route::get($docsPath . '/openapi.yaml', [DocsController::class, 'openapiYaml'])->name('bytedocs.openapi.yaml');
     Route::post($docsPath . '/chat', [DocsController::class, 'chat'])->name('bytedocs.chat');
+    Route::post($docsPath . '/performance/run', [DocsController::class, 'runPerformanceTest'])->name('bytedocs.performance.run');
+    Route::post($docsPath . '/performance/script', [DocsController::class, 'generateK6Script'])->name('bytedocs.performance.script');
+    Route::get($docsPath . '/performance/system-info', [DocsController::class, 'getK6SystemInfo'])->name('bytedocs.performance.info');
+    Route::post($docsPath . '/performance/ai-analyst', [DocsController::class, 'analyzePerformanceWithAI'])->name('bytedocs.performance.ai-analyst');
     Route::match(['GET', 'POST'], $docsPath . '/{path?}', [DocsController::class, 'index'])
         ->where('path', '.*')
         ->name('bytedocs.spa');

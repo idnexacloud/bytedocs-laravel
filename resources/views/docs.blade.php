@@ -15,6 +15,125 @@
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
     <script src="{{ asset('bytedocs/bytedocs.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('bytedocs/bytedocs.css') }}">
+    <style>
+        /* Performance AI Table Styling */
+        .perf-ai-table table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .dark .perf-ai-table table {
+            border-color: #3c3d3d;
+        }
+
+        .perf-ai-table thead {
+            background: #f9fafb;
+        }
+
+        .dark .perf-ai-table thead {
+            background: #171717;
+        }
+
+        .perf-ai-table th {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .dark .perf-ai-table th {
+            color: #d1d5db;
+            border-bottom-color: #3c3d3d;
+        }
+
+        .perf-ai-table td {
+            padding: 0.875rem 1rem;
+            color: #4b5563;
+            border-bottom: 1px solid #f3f4f6;
+            line-height: 1.6;
+        }
+
+        .dark .perf-ai-table td {
+            color: #9ca3af;
+            border-bottom-color: #2c2d2d;
+        }
+
+        .perf-ai-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .perf-ai-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .dark .perf-ai-table tbody tr:hover {
+            background: #1f1f1f;
+        }
+
+        .perf-ai-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Zebra striping for better readability */
+        .perf-ai-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .dark .perf-ai-table tbody tr:nth-child(even) {
+            background: #1a1a1a;
+        }
+
+        /* Code inside table cells */
+        .perf-ai-table td code,
+        .perf-ai-table th code {
+            background: #f3f4f6;
+            color: #7c3aed;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .dark .perf-ai-table td code,
+        .dark .perf-ai-table th code {
+            background: #0a0a0a;
+            color: #a78bfa;
+        }
+
+        /* Better spacing for lists in prose */
+        .perf-ai-table ul,
+        .perf-ai-table ol {
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .perf-ai-table li {
+            margin-top: 0.375rem;
+            margin-bottom: 0.375rem;
+        }
+
+        /* Horizontal rule spacing */
+        .perf-ai-table hr {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            border: 0;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .dark .perf-ai-table hr {
+            border-top-color: #3c3d3d;
+        }
+    </style>
 </head>
 <body class="bg-white dark:bg-black">
     <div class="flex h-screen">
@@ -27,7 +146,7 @@
             <div class="flex-1 overflow-y-auto flex flex-col">
                 
                 <div id="docsContent">
-                    @incluude('bytedocs::modes.docs')
+                    @include('bytedocs::modes.docs')
                 </div> 
                 
                 <div id="scenarioContent" class="hidden">
@@ -3694,11 +3813,733 @@
             setTimeout(addDragToEndpoints, 1000)
         }
 
+        // Performance Test Management
+        function initPerformanceTest() {
+            const perfModeConstant = document.getElementById('perfModeConstant');
+            const perfModeStages = document.getElementById('perfModeStages');
+            const perfConstantForm = document.getElementById('perfConstantForm');
+            const perfStagesForm = document.getElementById('perfStagesForm');
+            const perfAddStage = document.getElementById('perfAddStage');
+            const perfRunTest = document.getElementById('perfRunTest');
+            const perfGenerateScript = document.getElementById('perfGenerateScript');
+            const perfToggleAdvanced = document.getElementById('perfToggleAdvanced');
+            const perfAdvancedOptions = document.getElementById('perfAdvancedOptions');
+            const perfError = document.getElementById('perfError');
+            const perfErrorContent = document.getElementById('perfErrorContent');
+            const perfDismissError = document.getElementById('perfDismissError');
+            const perfResults = document.getElementById('perfResults');
+            const perfClearResults = document.getElementById('perfClearResults');
+
+            let currentPerfMode = 'constant';
+            let stageCounter = 1;
+
+            // Load saved custom k6 path from localStorage
+            const savedK6Path = localStorage.getItem('k6_custom_path');
+            if (savedK6Path) {
+                document.getElementById('perfK6CustomPath').value = savedK6Path;
+            }
+
+            // Save custom k6 path to localStorage when changed
+            document.getElementById('perfK6CustomPath').addEventListener('change', (e) => {
+                const path = e.target.value.trim();
+                if (path) {
+                    localStorage.setItem('k6_custom_path', path);
+                } else {
+                    localStorage.removeItem('k6_custom_path');
+                }
+            });
+
+            // Error and results handlers
+            perfDismissError.addEventListener('click', () => {
+                perfError.classList.add('hidden');
+            });
+
+            perfClearResults.addEventListener('click', () => {
+                perfResults.classList.add('hidden');
+            });
+
+            // Result tabs switching
+            document.querySelectorAll('.perf-result-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchPerfResultTab(tabName);
+                });
+            });
+
+            // AI Analyst trigger
+            // Language selector - load from localStorage
+            const savedLanguage = localStorage.getItem('perf_ai_language') || 'en';
+            const languageSelect = document.getElementById('perfAiLanguage');
+            if (languageSelect) {
+                languageSelect.value = savedLanguage;
+
+                // Save language preference when changed
+                languageSelect.addEventListener('change', (e) => {
+                    localStorage.setItem('perf_ai_language', e.target.value);
+                });
+            }
+
+            document.getElementById('perfTriggerAiAnalyst').addEventListener('click', async () => {
+                if (!latestTestResults) {
+                    showNotification('No test results available', 'error', 3000);
+                    return;
+                }
+
+                const button = document.getElementById('perfTriggerAiAnalyst');
+                const placeholder = document.getElementById('perfAiAnalystPlaceholder');
+                const resultDiv = document.getElementById('perfAiAnalystResult');
+                const selectedLanguage = document.getElementById('perfAiLanguage').value;
+
+                // Show loading state
+                button.disabled = true;
+                button.innerHTML = `
+                    <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analyzing...
+                `;
+
+                try {
+                    const docsPath = (typeof config !== 'undefined' && config.docs_path) ? config.docs_path : '/docs';
+                    const response = await fetch(`${docsPath}/performance/ai-analyst`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            results: latestTestResults,
+                            language: selectedLanguage
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Parse markdown with marked.js and sanitize with DOMPurify
+                        const rawHtml = marked.parse(result.analysis);
+                        const cleanHtml = DOMPurify.sanitize(rawHtml);
+
+                        // Hide placeholder, show result
+                        placeholder.classList.add('hidden');
+                        resultDiv.classList.remove('hidden');
+                        resultDiv.innerHTML = `
+                            <div class="bg-white dark:bg-[#212121] p-6 rounded-lg border border-gray-200 dark:border-[#3c3d3d]">
+                                <div class="flex items-start gap-3 mb-4">
+                                    <svg class="w-6 h-6 text-accent flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">AI Performance Analysis</h3>
+                                        <div class="prose prose-sm dark:prose-invert max-w-none
+                                            prose-headings:text-gray-900 dark:prose-headings:text-white
+                                            prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+                                            prose-strong:text-gray-900 dark:prose-strong:text-white prose-strong:font-semibold
+                                            prose-code:text-accent prose-code:bg-gray-100 dark:prose-code:bg-[#0a0a0a] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
+                                            prose-pre:bg-gray-900 prose-pre:text-green-400 prose-pre:p-4 prose-pre:rounded-lg
+                                            prose-ul:text-gray-700 dark:prose-ul:text-gray-300 prose-ul:leading-relaxed
+                                            prose-ol:text-gray-700 dark:prose-ol:text-gray-300 prose-ol:leading-relaxed
+                                            prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-li:my-1
+                                            prose-a:text-accent hover:prose-a:text-accent-hover prose-a:underline
+                                            perf-ai-table">${cleanHtml}</div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="document.getElementById('perfAiAnalystPlaceholder').classList.remove('hidden'); document.getElementById('perfAiAnalystResult').classList.add('hidden');" class="text-xs text-gray-600 dark:text-gray-400 hover:text-accent transition-colors">
+                                    Run analysis again
+                                </button>
+                            </div>
+                        `;
+                        showNotification('AI analysis completed!', 'success', 3000);
+                    } else {
+                        displayPerfError(result.error || 'Failed to analyze with AI');
+                    }
+                } catch (error) {
+                    displayPerfError('Error analyzing with AI: ' + error.message);
+                } finally {
+                    // Reset button
+                    button.disabled = false;
+                    button.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Analyze with AI
+                    `;
+                }
+            });
+
+            // Mode switching
+            perfModeConstant.addEventListener('click', () => {
+                currentPerfMode = 'constant';
+                perfModeConstant.classList.add('border-accent', 'bg-accent', 'bg-opacity-10', 'dark:bg-opacity-20', 'text-accent');
+                perfModeConstant.classList.remove('border-gray-300', 'dark:border-[#3c3d3d]', 'bg-white', 'dark:bg-[#212121]', 'text-gray-600', 'dark:text-gray-400');
+
+                perfModeStages.classList.remove('border-accent', 'bg-accent', 'bg-opacity-10', 'dark:bg-opacity-20', 'text-accent');
+                perfModeStages.classList.add('border-gray-300', 'dark:border-[#3c3d3d]', 'bg-white', 'dark:bg-[#212121]', 'text-gray-600', 'dark:text-gray-400');
+
+                perfConstantForm.classList.remove('hidden');
+                perfStagesForm.classList.add('hidden');
+            });
+
+            perfModeStages.addEventListener('click', () => {
+                currentPerfMode = 'stages';
+                perfModeStages.classList.add('border-accent', 'bg-accent', 'bg-opacity-10', 'dark:bg-opacity-20', 'text-accent');
+                perfModeStages.classList.remove('border-gray-300', 'dark:border-[#3c3d3d]', 'bg-white', 'dark:bg-[#212121]', 'text-gray-600', 'dark:text-gray-400');
+
+                perfModeConstant.classList.remove('border-accent', 'bg-accent', 'bg-opacity-10', 'dark:bg-opacity-20', 'text-accent');
+                perfModeConstant.classList.add('border-gray-300', 'dark:border-[#3c3d3d]', 'bg-white', 'dark:bg-[#212121]', 'text-gray-600', 'dark:text-gray-400');
+
+                perfConstantForm.classList.add('hidden');
+                perfStagesForm.classList.remove('hidden');
+            });
+
+            // Add stage functionality
+            perfAddStage.addEventListener('click', () => {
+                stageCounter++;
+                const stagesList = document.getElementById('perfStagesList');
+                const stageHtml = `
+                    <div class="perf-stage bg-white dark:bg-[#212121] border border-gray-200 dark:border-[#3c3d3d] rounded-lg p-4" data-stage="${stageCounter}">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Stage ${stageCounter}</span>
+                            <button type="button" class="perf-remove-stage text-red-500 hover:text-red-700 text-xs">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Target VUs</label>
+                                <input type="number" class="perf-stage-vus w-full px-2 py-1.5 border border-gray-300 dark:border-[#3c3d3d] rounded bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-sm" value="10" min="0" max="1000">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Duration</label>
+                                <div class="flex gap-1">
+                                    <input type="number" class="perf-stage-duration flex-1 px-2 py-1.5 border border-gray-300 dark:border-[#3c3d3d] rounded bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-sm" value="30" min="1" max="3600">
+                                    <select class="perf-stage-unit px-2 py-1.5 border border-gray-300 dark:border-[#3c3d3d] rounded bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-xs">
+                                        <option value="s" selected>s</option>
+                                        <option value="m">m</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                stagesList.insertAdjacentHTML('beforeend', stageHtml);
+                attachStageRemoveHandlers();
+            });
+
+            // Remove stage functionality
+            function attachStageRemoveHandlers() {
+                document.querySelectorAll('.perf-remove-stage').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const stage = e.target.closest('.perf-stage');
+                        const stages = document.querySelectorAll('.perf-stage');
+                        if (stages.length > 1) {
+                            stage.remove();
+                            renumberStages();
+                        } else {
+                            showNotification('At least one stage is required', 'error', 3000);
+                        }
+                    };
+                });
+            }
+
+            function renumberStages() {
+                const stages = document.querySelectorAll('.perf-stage');
+                stages.forEach((stage, index) => {
+                    const num = index + 1;
+                    stage.querySelector('span').textContent = `Stage ${num}`;
+                    stage.setAttribute('data-stage', num);
+
+                    // Show/hide remove button
+                    const removeBtn = stage.querySelector('.perf-remove-stage');
+                    if (stages.length === 1) {
+                        removeBtn.classList.add('hidden');
+                    } else {
+                        removeBtn.classList.remove('hidden');
+                    }
+                });
+                stageCounter = stages.length;
+            }
+
+            attachStageRemoveHandlers();
+            renumberStages();
+
+            // Toggle advanced options
+            perfToggleAdvanced.addEventListener('click', () => {
+                perfAdvancedOptions.classList.toggle('hidden');
+                const svg = perfToggleAdvanced.querySelector('svg');
+                svg.classList.toggle('rotate-180');
+            });
+
+            // Run performance test
+            perfRunTest.addEventListener('click', async () => {
+                if (!currentEndpoint) {
+                    showNotification('Please select an endpoint first', 'error', 3000);
+                    return;
+                }
+
+                const perfTestConfig = gatherPerfConfig();
+                if (!perfTestConfig) return;
+
+                // Show loading state
+                perfRunTest.disabled = true;
+                perfRunTest.innerHTML = `
+                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Running Test...
+                `;
+
+                try {
+                    const docsPath = perfTestConfig.docs_path || '/docs';
+                    const response = await fetch(`${docsPath}/performance/run`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(perfTestConfig)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        displayPerfResults(result.results);
+                        showNotification('Performance test completed!', 'success', 3000);
+                    } else {
+                        displayPerfError(result.error || 'Test failed');
+                    }
+                } catch (error) {
+                    displayPerfError('Error running test: ' + error.message);
+                } finally {
+                    perfRunTest.disabled = false;
+                    perfRunTest.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Run Performance Test
+                    `;
+                }
+            });
+
+            // Generate script
+            perfGenerateScript.addEventListener('click', async () => {
+                if (!currentEndpoint) {
+                    showNotification('Please select an endpoint first', 'error', 3000);
+                    return;
+                }
+
+                const perfTestConfig = gatherPerfConfig();
+                if (!perfTestConfig) return;
+
+                try {
+                    const docsPath = perfTestConfig.docs_path || '/docs';
+                    const response = await fetch(`${docsPath}/performance/script`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(perfTestConfig)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showScriptModal(result.script);
+                    } else {
+                        displayPerfError(result.error || 'Failed to generate script');
+                    }
+                } catch (error) {
+                    displayPerfError('Error generating script: ' + error.message);
+                }
+            });
+
+            function gatherPerfConfig() {
+                const baseUrl = document.getElementById('baseUrlSelect').value || document.getElementById('baseUrlSelectDesktop').value;
+                if (!baseUrl) {
+                    showNotification('Please select a base URL', 'error', 3000);
+                    return null;
+                }
+
+                const url = baseUrl + currentEndpoint.path;
+                const method = currentEndpoint.method;
+                const thinkTime = parseFloat(document.getElementById('perfThinkTime').value) || 1;
+                const includeAuth = document.getElementById('perfIncludeAuth').checked;
+                const customK6Path = document.getElementById('perfK6CustomPath').value.trim();
+
+                let perfConfig = {
+                    url,
+                    method,
+                    mode: currentPerfMode,
+                    think_time: thinkTime,
+                    headers: {},
+                    docs_path: (typeof config !== 'undefined' && config.docs_path) ? config.docs_path : '/docs'
+                };
+
+                // Add custom k6 path if provided
+                if (customK6Path) {
+                    perfConfig.k6_path = customK6Path;
+                }
+
+                // Add auth headers if needed
+                if (includeAuth && window.authConfig) {
+                    if (window.authConfig.type === 'bearer' && window.authConfig.token) {
+                        perfConfig.headers['Authorization'] = `Bearer ${window.authConfig.token}`;
+                    } else if (window.authConfig.type === 'api-key' && window.authConfig.apiKey && window.authConfig.apiKeyName) {
+                        perfConfig.headers[window.authConfig.apiKeyName] = window.authConfig.apiKey;
+                    } else if (window.authConfig.type === 'basic' && window.authConfig.username && window.authConfig.password) {
+                        const credentials = btoa(`${window.authConfig.username}:${window.authConfig.password}`);
+                        perfConfig.headers['Authorization'] = `Basic ${credentials}`;
+                    }
+                }
+
+                if (currentPerfMode === 'constant') {
+                    perfConfig.vus = parseInt(document.getElementById('perfConstantVUs').value) || 10;
+                    const duration = parseInt(document.getElementById('perfConstantDuration').value) || 30;
+                    const unit = document.getElementById('perfConstantDurationUnit').value || 's';
+                    perfConfig.duration = `${duration}${unit}`;
+
+                    const iterations = document.getElementById('perfConstantIterations').value;
+                    if (iterations) {
+                        perfConfig.iterations = parseInt(iterations);
+                    }
+                } else {
+                    perfConfig.stages = [];
+                    document.querySelectorAll('.perf-stage').forEach(stage => {
+                        const vus = parseInt(stage.querySelector('.perf-stage-vus').value) || 10;
+                        const duration = parseInt(stage.querySelector('.perf-stage-duration').value) || 30;
+                        const unit = stage.querySelector('.perf-stage-unit').value || 's';
+                        perfConfig.stages.push({
+                            target: vus,
+                            duration: `${duration}${unit}`
+                        });
+                    });
+                }
+
+                return perfConfig;
+            }
+
+            function displayPerfError(errorMessage) {
+                const perfError = document.getElementById('perfError');
+                const perfErrorContent = document.getElementById('perfErrorContent');
+                const perfResults = document.getElementById('perfResults');
+
+                // Hide results, show error
+                perfResults.classList.add('hidden');
+                perfError.classList.remove('hidden');
+
+                // Set error message
+                perfErrorContent.textContent = errorMessage;
+
+                // Scroll to error
+                perfError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // Store latest test results for AI analysis
+            let latestTestResults = null;
+
+            function displayPerfResults(results) {
+                const perfResults = document.getElementById('perfResults');
+                const perfResultsContent = document.getElementById('perfResultsContent');
+                const perfAnalystContent = document.getElementById('perfAnalystContent');
+                const perfError = document.getElementById('perfError');
+
+                // Store results for AI analyst
+                latestTestResults = results;
+
+                // Hide error, show results
+                perfError.classList.add('hidden');
+                perfResults.classList.remove('hidden');
+
+                // Reset to Computer View tab
+                switchPerfResultTab('computer');
+
+                // Populate Computer View
+                let html = '<div class="space-y-3">';
+
+                if (results.summary) {
+                    html += '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">';
+
+                    if (results.summary.total_requests) {
+                        html += `
+                            <div class="bg-white dark:bg-[#212121] p-3 rounded border border-gray-200 dark:border-[#3c3d3d]">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Total Requests</div>
+                                <div class="text-lg font-bold text-gray-900 dark:text-white">${results.summary.total_requests}</div>
+                            </div>
+                        `;
+                    }
+
+                    if (results.summary.avg_response_time) {
+                        html += `
+                            <div class="bg-white dark:bg-[#212121] p-3 rounded border border-gray-200 dark:border-[#3c3d3d]">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Avg Response Time</div>
+                                <div class="text-lg font-bold text-gray-900 dark:text-white">${results.summary.avg_response_time}</div>
+                            </div>
+                        `;
+                    }
+
+                    if (results.summary.failure_rate) {
+                        html += `
+                            <div class="bg-white dark:bg-[#212121] p-3 rounded border border-gray-200 dark:border-[#3c3d3d]">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Failure Rate</div>
+                                <div class="text-lg font-bold text-red-600">${results.summary.failure_rate}</div>
+                            </div>
+                        `;
+                    }
+
+                    html += '</div>';
+                }
+
+                if (results.output) {
+                    html += `
+                        <div class="mt-4">
+                            <h5 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Full Output</h5>
+                            <pre class="bg-gray-900 text-green-400 p-4 rounded text-xs overflow-x-auto font-mono">${escapeHtml(results.output)}</pre>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+
+                perfResultsContent.innerHTML = html;
+
+                // Populate Analyst Result
+                displayAnalystResult(results);
+
+                // Reset AI Analyst tab
+                document.getElementById('perfAiAnalystPlaceholder').classList.remove('hidden');
+                document.getElementById('perfAiAnalystResult').classList.add('hidden');
+
+                // Scroll to results
+                perfResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            function switchPerfResultTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.perf-result-tab').forEach(tab => {
+                    const isActive = tab.getAttribute('data-tab') === tabName;
+                    if (isActive) {
+                        // Active tab styling - raised tab effect
+                        tab.classList.add('border-accent', 'text-accent',
+                            'bg-gray-100', 'dark:bg-[#0a0a0a]',
+                            'border-l', 'border-r', 'border-t',
+                            'border-gray-200', 'dark:border-[#3c3d3d]',
+                            'rounded-t-lg');
+                        tab.classList.remove('border-transparent', 'text-gray-600', 'dark:text-gray-400',
+                            'hover:text-gray-900', 'dark:hover:text-gray-200',
+                            'hover:border-gray-300', 'dark:hover:border-gray-600');
+                    } else {
+                        // Inactive tab styling
+                        tab.classList.remove('border-accent', 'text-accent',
+                            'bg-gray-100', 'dark:bg-[#0a0a0a]',
+                            'border-l', 'border-r', 'border-t',
+                            'border-gray-200', 'dark:border-[#3c3d3d]',
+                            'rounded-t-lg');
+                        tab.classList.add('border-transparent', 'text-gray-600', 'dark:text-gray-400',
+                            'hover:text-gray-900', 'dark:hover:text-gray-200',
+                            'hover:border-gray-300', 'dark:hover:border-gray-600');
+                    }
+                });
+
+                // Show/hide tab contents
+                document.querySelectorAll('.perf-result-tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(`perfResultTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.remove('hidden');
+            }
+
+            function displayAnalystResult(results) {
+                const perfAnalystContent = document.getElementById('perfAnalystContent');
+
+                let html = '<div class="space-y-6">';
+
+                // Check if HTTP traffic actually occurred
+                const hasHttpTraffic = results.summary && results.summary.has_http_traffic !== false;
+
+                // If no HTTP traffic, show error warning
+                if (!hasHttpTraffic) {
+                    html += `
+                        <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">No HTTP Traffic Detected</h4>
+                                    <p class="text-sm text-red-700 dark:text-red-200">
+                                        The test completed but did not generate any HTTP requests. This means the endpoint was not actually tested.
+                                    </p>
+                                    <p class="text-sm text-red-700 dark:text-red-200 mt-2">
+                                        <strong>Possible causes:</strong><br>
+                                        • Invalid URL format<br>
+                                        • Network connectivity issues<br>
+                                        • Script configuration error<br>
+                                        • Server not responding
+                                    </p>
+                                    <p class="text-sm text-red-700 dark:text-red-200 mt-2">
+                                        <strong>Recommendation:</strong> Check the endpoint URL and try again.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    perfAnalystContent.innerHTML = html + '</div>';
+                    return;
+                }
+
+                // Summary Cards
+                if (results.summary) {
+                    html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+
+                    // Performance Grade
+                    const avgTime = results.summary.avg_response_time ? parseFloat(results.summary.avg_response_time) : 0;
+                    const failureRate = results.summary.failure_rate ? parseFloat(results.summary.failure_rate) : 0;
+
+                    let grade = 'A';
+                    let gradeColor = 'green';
+                    let gradeText = 'Excellent';
+
+                    if (avgTime > 1000 || failureRate > 5) {
+                        grade = 'F';
+                        gradeColor = 'red';
+                        gradeText = 'Poor';
+                    } else if (avgTime > 500 || failureRate > 2) {
+                        grade = 'C';
+                        gradeColor = 'yellow';
+                        gradeText = 'Fair';
+                    } else if (avgTime > 200 || failureRate > 0.5) {
+                        grade = 'B';
+                        gradeColor = 'blue';
+                        gradeText = 'Good';
+                    }
+
+                    html += `
+                        <div class="bg-white dark:bg-[#212121] p-4 rounded-lg border border-gray-200 dark:border-[#3c3d3d]">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Performance Grade</h3>
+                            <div class="flex items-center gap-4">
+                                <div class="text-5xl font-bold text-${gradeColor}-600">${grade}</div>
+                                <div>
+                                    <div class="text-lg font-semibold text-gray-900 dark:text-white">${gradeText}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Overall Performance</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Key Metrics
+                    html += `
+                        <div class="bg-white dark:bg-[#212121] p-4 rounded-lg border border-gray-200 dark:border-[#3c3d3d]">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Key Metrics</h3>
+                            <div class="space-y-2">
+                                ${results.summary.total_requests ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Total Requests</span>
+                                        <span class="text-sm font-semibold text-gray-900 dark:text-white">${results.summary.total_requests}</span>
+                                    </div>
+                                ` : ''}
+                                ${results.summary.avg_response_time ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Avg Response Time</span>
+                                        <span class="text-sm font-semibold text-gray-900 dark:text-white">${results.summary.avg_response_time}</span>
+                                    </div>
+                                ` : ''}
+                                ${results.summary.failure_rate ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Failure Rate</span>
+                                        <span class="text-sm font-semibold text-red-600">${results.summary.failure_rate}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+
+                    html += '</div>';
+
+                    // Analysis & Recommendations
+                    html += '<div class="bg-white dark:bg-[#212121] p-4 rounded-lg border border-gray-200 dark:border-[#3c3d3d]">';
+                    html += '<h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Analysis & Recommendations</h3>';
+                    html += '<div class="space-y-3">';
+
+                    // Response Time Analysis
+                    if (avgTime > 0) {
+                        html += '<div class="flex items-start gap-2">';
+                        if (avgTime < 200) {
+                            html += '<svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+                            html += `<div><p class="text-sm text-gray-900 dark:text-white font-medium">Response Time: Excellent</p><p class="text-xs text-gray-600 dark:text-gray-400">Average response time (${avgTime}ms) is very good.</p></div>`;
+                        } else if (avgTime < 500) {
+                            html += '<svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>';
+                            html += `<div><p class="text-sm text-gray-900 dark:text-white font-medium">Response Time: Good</p><p class="text-xs text-gray-600 dark:text-gray-400">Average response time (${avgTime}ms) is acceptable. Consider optimizing for better performance.</p></div>`;
+                        } else {
+                            html += '<svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+                            html += `<div><p class="text-sm text-gray-900 dark:text-white font-medium">Response Time: Needs Improvement</p><p class="text-xs text-gray-600 dark:text-gray-400">Average response time (${avgTime}ms) is high. Consider caching, database optimization, or CDN usage.</p></div>`;
+                        }
+                        html += '</div>';
+                    }
+
+                    // Failure Rate Analysis
+                    if (failureRate >= 0) {
+                        html += '<div class="flex items-start gap-2">';
+                        if (failureRate < 0.1) {
+                            html += '<svg class="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>';
+                            html += `<div><p class="text-sm text-gray-900 dark:text-white font-medium">Reliability: Excellent</p><p class="text-xs text-gray-600 dark:text-gray-400">Failure rate (${failureRate}%) is very low.</p></div>`;
+                        } else if (failureRate < 5) {
+                            html += '<svg class="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>';
+                            html += `<div><p class="text-sm text-gray-900 dark:text-white font-medium">Reliability: Moderate</p><p class="text-xs text-gray-600 dark:text-gray-400">Failure rate (${failureRate}%) detected. Investigate error handling and edge cases.</p></div>`;
+                        } else {
+                            html += '<svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>';
+                            html += `<div><p class="text-sm text-gray-900 dark:text-white font-medium">Reliability: Critical Issue</p><p class="text-xs text-gray-600 dark:text-gray-400">High failure rate (${failureRate}%). Immediate attention required. Check server logs and error handling.</p></div>`;
+                        }
+                        html += '</div>';
+                    }
+
+                    html += '</div></div>';
+                }
+
+                html += '</div>';
+                perfAnalystContent.innerHTML = html;
+            }
+
+            function showScriptModal(script) {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-[#171717] rounded-lg max-w-3xl w-full max-h-[80vh] flex flex-col">
+                        <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-[#2c2d2d]">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Generated k6 Script</h3>
+                            <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="this.closest('.fixed').remove()">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex-1 overflow-auto p-4">
+                            <pre class="bg-gray-900 text-green-400 p-4 rounded text-sm overflow-x-auto font-mono">${escapeHtml(script)}</pre>
+                        </div>
+                        <div class="p-4 border-t border-gray-200 dark:border-[#2c2d2d] flex gap-3">
+                            <button class="flex-1 px-4 py-2 bg-accent text-white rounded hover:bg-accent-hover" onclick="navigator.clipboard.writeText(\`${script.replace(/`/g, '\\`')}\`).then(() => showNotification('Copied to clipboard!', 'success', 2000))">
+                                Copy to Clipboard
+                            </button>
+                            <button class="px-4 py-2 border border-gray-300 dark:border-[#3c3d3d] text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-[#212121]" onclick="this.closest('.fixed').remove()">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             init();
             initMonacoEditor();
             initModeToggle();
             initScenarioManagement();
+            initPerformanceTest();
 
         });
     </script>
