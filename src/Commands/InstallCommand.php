@@ -20,6 +20,9 @@ class InstallCommand extends Command
             '--force' => true
         ]);
 
+        // Publish assets (CSS)
+        $this->publishAssets();
+
         // Setup .env variables
         $this->setupEnvironmentFile();
 
@@ -31,6 +34,40 @@ class InstallCommand extends Command
         $this->line('3. Enable AI features by setting BYTEDOCS_AI_ENABLED=true and configuring your AI provider');
 
         return 0;
+    }
+
+    protected function publishAssets()
+    {
+        $this->info('Publishing ByteDocs assets...');
+
+        $publicPath = public_path('bytedocs');
+
+        // Create directory if it doesn't exist
+        if (!File::isDirectory($publicPath)) {
+            File::makeDirectory($publicPath, 0755, true);
+        }
+
+        // Copy CSS file
+        $cssSource = __DIR__ . '/../../resources/assets/bytedocs.css';
+        $cssDestination = $publicPath . '/bytedocs.css';
+
+        if (File::exists($cssSource)) {
+            File::copy($cssSource, $cssDestination);
+            $this->line('✓ Published: bytedocs.css');
+        } else {
+            $this->warn('⚠ CSS file not found at: ' . $cssSource);
+        }
+
+        // Copy JS file
+        $jsSource = __DIR__ . '/../../resources/assets/bytedocs.js';
+        $jsDestination = $publicPath . '/bytedocs.js';
+
+        if (File::exists($jsSource)) {
+            File::copy($jsSource, $jsDestination);
+            $this->line('✓ Published: bytedocs.js');
+        } else {
+            $this->warn('⚠ JS file not found at: ' . $jsSource);
+        }
     }
 
     protected function setupEnvironmentFile()

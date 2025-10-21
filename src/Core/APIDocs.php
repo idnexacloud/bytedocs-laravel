@@ -9,6 +9,7 @@ use Illuminate\Http\Response as LaravelResponse;
 use ByteDocs\Laravel\AI\Client as AIClient;
 use ByteDocs\Laravel\AI\ChatRequest;
 use ByteDocs\Laravel\Parser\LaravelParser;
+use ByteDocs\Laravel\Parser\ModelAnalyzer;
 
 class APIDocs
 {
@@ -18,11 +19,13 @@ class APIDocs
     protected array $schemas = [];
     protected ?AIClient $llmClient = null;
     protected LaravelParser $parser;
+    protected ModelAnalyzer $modelAnalyzer;
 
     public function __construct(Config $config)
     {
         $this->config = $config;
         $this->parser = new LaravelParser();
+        $this->modelAnalyzer = new ModelAnalyzer();
         
         $this->documentation = new Documentation(
             new APIInfo(
@@ -752,9 +755,9 @@ class APIDocs
         try {
             // Clean the PHP code
             $phpCode = trim($phpCode, " \t\n\r\0\x0B,");
-            
-            // Simple array parsing for basic cases
-            if (preg_match('/^\\[.*\\]$/', $phpCode)) {
+
+            // Simple array parsing for basic cases (use /s flag to match newlines)
+            if (preg_match('/^\\[.*\\]$/s', $phpCode)) {
                 // Try to evaluate safely for simple arrays
                 $result = $this->safeEvalPhpArray($phpCode);
                 if ($result !== null) {
@@ -868,18 +871,20 @@ class APIDocs
                     }
                     $i++; // Skip closing quote
                 } else {
-                    // Parse other values (numbers, booleans, etc.)
+                    // Parse other values (numbers, booleans, variables, etc.)
                     $valueStr = '';
                     while ($i < $len && !in_array($content[$i], [',', ']'])) {
                         $valueStr .= $content[$i];
                         $i++;
                     }
                     $valueStr = trim($valueStr);
-                    
+
                     if ($valueStr === 'true') $value = true;
                     elseif ($valueStr === 'false') $value = false;
                     elseif ($valueStr === 'null') $value = null;
                     elseif (is_numeric($valueStr)) $value = strpos($valueStr, '.') !== false ? (float)$valueStr : (int)$valueStr;
+                    // Keep variable names (starting with $) as-is for later enhancement
+                    elseif (str_starts_with($valueStr, '$')) $value = $valueStr;
                     else $value = $valueStr;
                 }
                 
@@ -993,6 +998,10 @@ class APIDocs
                     elseif (is_numeric($value)) {
                         $result[$key] = strpos($value, '.') !== false ? (float)$value : (int)$value;
                     }
+                    // Keep variable names (starting with $) as-is for later enhancement
+                    elseif (str_starts_with($value, '$')) {
+                        $result[$key] = $value;
+                    }
                     // Default string value
                     else {
                         $result[$key] = $value;
@@ -1065,7 +1074,7 @@ class APIDocs
         // Clean source code
         $source = preg_replace('/\/\*.*?\*\//', '', $source); // Remove /* */ comments
         $source = preg_replace('/\/\/.*$/', '', $source); // Remove // comments
-        
+
         // Look for Resource returns with various patterns
         if (preg_match('/return\s+new\s+(\w+Resource)\s*\(/i', $source, $matches)) {
             return array(
@@ -1074,7 +1083,7 @@ class APIDocs
                 'method' => $methodName
             );
         }
-        
+
         if (preg_match('/return\s+(\w+Resource)::collection\s*\(/i', $source, $matches)) {
             return array(
                 'type' => 'collection',
@@ -1082,7 +1091,7 @@ class APIDocs
                 'method' => $methodName
             );
         }
-        
+
         // Look for $resource->response() patterns
         if (preg_match('/(\w+Resource).*?->response\(\)/i', $source, $matches)) {
             return array(
@@ -1091,20 +1100,21 @@ class APIDocs
                 'method' => $methodName
             );
         }
-        
+
         // Look for response()->json() patterns and extract the content (including multiline)
-        if (preg_match('/response\(\)\s*->\s*json\s*\(([^;]+?)\)\s*;/s', $source, $matches)) {
+        if (preg_match('/response\(\)\s*->\s*json\s*\(([^;]+?)\)(?:\s*,\s*(\d+))?\s*;/s', $source, $matches)) {
             $jsonContent = trim($matches[1]);
-            
+            $statusCode = isset($matches[2]) ? $matches[2] : '200';
+
             // Handle nested array structures by finding matching brackets
             $openBrackets = 0;
             $foundEnd = false;
             $cleanContent = '';
-            
+
             for ($i = 0; $i < strlen($jsonContent); $i++) {
                 $char = $jsonContent[$i];
                 $cleanContent .= $char;
-                
+
                 if ($char === '[') {
                     $openBrackets++;
                 } elseif ($char === ']') {
@@ -1119,16 +1129,23 @@ class APIDocs
                     break;
                 }
             }
-            
+
+            // Parse the PHP array
             $parsedData = $this->parsePhpArrayFromString($cleanContent);
-            
+
+            // Enhance parsed data by detecting and substituting model variables
+            if ($parsedData) {
+                $parsedData = $this->enhanceResponseWithModels($parsedData, $source);
+            }
+
             return array(
                 'type' => 'json',
                 'method' => $methodName,
-                'data' => $parsedData ?: ['status' => 'success'] // Fallback if parsing fails
+                'data' => $parsedData ?: ['status' => 'success'], // Fallback if parsing fails
+                'statusCode' => $statusCode
             );
         }
-        
+
         // Look for JsonResponse patterns
         if (preg_match('/JsonResponse/i', $source)) {
             return array(
@@ -1136,8 +1153,71 @@ class APIDocs
                 'method' => $methodName
             );
         }
-        
+
         return null;
+    }
+
+    /**
+     * Enhance response data by detecting model usage and substituting with actual model structure
+     */
+    protected function enhanceResponseWithModels(array $responseData, string $source): array
+    {
+        foreach ($responseData as $key => $value) {
+            // If value is a variable name (string starting with $)
+            if (is_string($value) && str_starts_with($value, '$')) {
+                $variableName = ltrim($value, '$');
+
+                // Try to detect model from the source code
+                $modelClass = $this->modelAnalyzer->detectModelFromCode($source, $variableName);
+
+                if ($modelClass) {
+                    $modelStructure = $this->modelAnalyzer->analyzeModel($modelClass);
+
+                    if ($modelStructure) {
+                        // Check if it's likely a collection (plural variable names or method names like 'index', 'all')
+                        if ($this->isProbablyCollection($variableName, $source)) {
+                            $responseData[$key] = [$modelStructure];
+                        } else {
+                            $responseData[$key] = $modelStructure;
+                        }
+                    }
+                }
+            }
+            // Recursively process nested arrays
+            elseif (is_array($value)) {
+                $responseData[$key] = $this->enhanceResponseWithModels($value, $source);
+            }
+        }
+
+        return $responseData;
+    }
+
+    /**
+     * Determine if a variable likely represents a collection
+     */
+    protected function isProbablyCollection(string $variableName, string $source): bool
+    {
+        // Check for plural variable names
+        $plural = ['s', 'es', 'ies'];
+        foreach ($plural as $suffix) {
+            if (str_ends_with($variableName, $suffix)) {
+                return true;
+            }
+        }
+
+        // Check for collection-related methods in source
+        $collectionPatterns = [
+            '/\$' . preg_quote($variableName, '/') . '\s*=\s*\w+::(?:all|get|orderBy|latest|oldest|paginate|simplePaginate)\s*\(/',
+            '/\$' . preg_quote($variableName, '/') . '\s*=\s*\w+::(?:where|whereIn|whereNotIn)\s*\([^)]+\)\s*->\s*get\s*\(/',
+        ];
+
+        foreach ($collectionPatterns as $pattern) {
+            if (preg_match($pattern, $source)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
